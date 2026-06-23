@@ -6,14 +6,12 @@
     <title>Audio Speed Player</title>
     <style>
       :root {
-        --page-bg: #dfeee8;
-        --ink: #15130f;
-        --muted: #4e635d;
-        --panel: #fbfff7;
-        --line: rgba(21, 19, 15, 0.15);
-        --blue: #2b7cff;
-        --gold: #ffb238;
-        --green: #16a36a;
+        --page-bg: #e7f1ef;
+        --ink: #142022;
+        --muted: #5d6e72;
+        --panel: rgba(255, 255, 252, 0.74);
+        --line: rgba(20, 32, 34, 0.14);
+        --coral: #ef604b;
       }
 
       * {
@@ -24,56 +22,77 @@
         margin: 0;
         min-height: 100vh;
         background:
-          linear-gradient(135deg, rgba(43, 124, 255, 0.14), transparent 28%),
-          linear-gradient(215deg, rgba(255, 178, 56, 0.18), transparent 34%),
-          linear-gradient(180deg, #f8fff5 0%, var(--page-bg) 100%);
+          linear-gradient(90deg, rgba(20, 32, 34, 0.055) 0 1px, transparent 1px 36px),
+          linear-gradient(180deg, #f8fbfb 0%, var(--page-bg) 58%, #f8f1df 100%);
         color: var(--ink);
         font-family: "Aptos", "Segoe UI", "Helvetica Neue", sans-serif;
       }
 
       main {
-        width: min(1120px, calc(100% - 32px));
+        width: min(1080px, calc(100% - 32px));
         margin: 0 auto;
-        padding: 56px 0;
+        padding: 42px 0;
       }
 
       .hero {
         display: grid;
-        grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
-        gap: 28px;
-        align-items: end;
+        grid-template-columns: minmax(300px, 0.82fr) minmax(360px, 1fr);
+        gap: 34px;
+        align-items: center;
       }
 
       .copy {
-        padding-bottom: 10px;
+        max-width: 470px;
       }
 
       .kicker {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--coral);
+        border-radius: 8px;
+        background: rgba(255, 255, 252, 0.58);
         margin: 0 0 16px;
-        color: var(--green);
+        color: #6a332d;
         font-size: 13px;
-        font-weight: 850;
+        font-weight: 820;
         letter-spacing: 0;
         text-transform: uppercase;
+        padding: 6px 10px 6px 8px;
       }
 
       h1 {
         margin: 0;
-        max-width: 720px;
-        font-size: clamp(44px, 7vw, 86px);
-        line-height: 0.9;
+        max-width: 560px;
+        font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+        font-size: 64px;
+        line-height: 0.96;
         letter-spacing: 0;
       }
 
       .intro {
-        max-width: 570px;
-        margin: 20px 0 0;
+        max-width: 430px;
+        margin: 18px 0 0;
         color: var(--muted);
-        font-size: 18px;
-        line-height: 1.6;
+        font-size: 17px;
+        line-height: 1.62;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 22px;
+      }
+
+      .tags span {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 252, 0.54);
+        color: #284348;
+        font-size: 13px;
+        font-weight: 760;
+        padding: 7px 9px;
       }
 
       .demo-panel,
@@ -85,11 +104,15 @@
         padding: 0;
       }
 
+      audio-speed-player {
+        width: 100%;
+      }
+
       .snippet-panel {
         border: 1px solid var(--line);
         margin-top: 28px;
-        background: rgba(251, 255, 247, 0.78);
-        box-shadow: 0 20px 60px rgba(21, 19, 15, 0.12);
+        background: var(--panel);
+        box-shadow: 0 18px 46px rgba(20, 32, 34, 0.08);
         overflow: hidden;
       }
 
@@ -114,8 +137,8 @@
         margin: 0;
         overflow-x: auto;
         padding: 18px;
-        background: #171512;
-        color: #fff4df;
+        background: #102024;
+        color: #eafff9;
         font-size: 13px;
         line-height: 1.7;
       }
@@ -135,7 +158,7 @@
         min-height: 110px;
         border: 1px solid var(--line);
         border-radius: 8px;
-        background: rgba(255, 250, 242, 0.62);
+        background: rgba(255, 255, 252, 0.62);
         padding: 16px;
       }
 
@@ -153,7 +176,7 @@
       @media (max-width: 840px) {
         main {
           width: min(100% - 24px, 640px);
-          padding: 32px 0;
+          padding: 28px 0;
         }
 
         .hero,
@@ -162,7 +185,7 @@
         }
 
         h1 {
-          font-size: 48px;
+          font-size: 44px;
         }
       }
     </style>
@@ -173,11 +196,15 @@
       <section class="hero" aria-label="Audio Speed Player demo">
         <div class="copy">
           <p class="kicker">free web component</p>
-          <h1>Cassette Tempo Player</h1>
+          <h1>Tempo Cassette</h1>
           <p class="intro">
-            A tiny reusable browser plugin for local audio practice, tempo changes, and drop-in lesson pages.
-            Styled like a compact tape deck, built with native web audio controls.
+            A reusable audio speed player for practice pages, lessons, and quick song study.
           </p>
+          <div class="tags" aria-label="Project traits">
+            <span>Web Component</span>
+            <span>MIT</span>
+            <span>No dependencies</span>
+          </div>
         </div>
 
         <div class="demo-panel">

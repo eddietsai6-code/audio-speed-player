@@ -24,13 +24,20 @@
           slider.value = "1.25";
           slider.dispatchEvent(new Event("input", { bubbles: true }));
 
+          const designChecks = {
+            hasGlassCassette: Boolean(shadow.querySelector(".cassette-shell.glass-cassette")),
+            hasControlDeck: Boolean(shadow.querySelector(".control-deck")),
+            hasMeterTrack: Boolean(shadow.querySelector(".meter-track"))
+          };
+
           result.textContent = JSON.stringify({
-            ok: true,
+            ok: Object.values(designChecks).every(Boolean),
             defined: Boolean(customElements.get("audio-speed-player")),
             title: shadow.querySelector(".title").textContent,
             before,
             after: readout.textContent,
             audioRate: audio.playbackRate,
+            ...designChecks,
             hasCassetteShell: Boolean(shadow.querySelector(".cassette-shell")),
             reelCount: shadow.querySelectorAll(".reel").length,
             hasTapeWindow: Boolean(shadow.querySelector(".tape-window")),

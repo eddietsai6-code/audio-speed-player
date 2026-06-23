@@ -56,16 +56,15 @@ export function buildPresetRates(min, max, presets = DEFAULT_PRESET_RATES) {
 
 const componentStyles = `
   :host {
-    --asp-bg: #2a2722;
-    --asp-ink: #181511;
-    --asp-muted: #756c5e;
-    --asp-line: rgba(24, 21, 17, 0.22);
-    --asp-accent: #316dff;
-    --asp-accent-strong: #123eaf;
-    --asp-warm: #f6b33d;
-    --asp-red: #e5533d;
-    --asp-panel: #f7eedf;
+    --asp-ink: #142022;
+    --asp-muted: #627174;
+    --asp-panel: rgba(255, 255, 252, 0.82);
+    --asp-accent: #0c8fdd;
+    --asp-accent-strong: #085b9f;
+    --asp-mint: #18b89a;
+    --asp-coral: #ef604b;
     --asp-radius: 8px;
+    --asp-rate-progress: 42.85%;
     display: block;
     color: var(--asp-ink);
     font-family: "Aptos", "Segoe UI", "Helvetica Neue", sans-serif;
@@ -86,52 +85,58 @@ const componentStyles = `
     overflow: hidden;
     width: 100%;
     min-width: 0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.62);
     border-radius: var(--asp-radius);
     background:
-      radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.26), transparent 23%),
-      linear-gradient(145deg, rgba(255, 255, 255, 0.18), transparent 34%),
-      linear-gradient(180deg, #5f5a50 0%, #34312b 48%, #211f1c 100%);
+      linear-gradient(90deg, rgba(20, 32, 34, 0.05) 0 1px, transparent 1px 18px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(237, 246, 245, 0.62) 44%, rgba(220, 233, 236, 0.74));
     box-shadow:
-      0 28px 64px rgba(14, 11, 8, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.42),
-      inset 0 -14px 34px rgba(0, 0, 0, 0.28);
-    padding: 18px;
+      0 22px 56px rgba(27, 47, 53, 0.18),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 -18px 34px rgba(69, 99, 108, 0.08) inset;
+    padding: 16px;
   }
 
-  .cassette-shell::before,
-  .cassette-shell::after {
-    content: "";
-    position: absolute;
-    inset-inline: 16px;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.18);
-    pointer-events: none;
+  .glass-cassette {
+    backdrop-filter: blur(18px) saturate(1.15);
   }
 
   .cassette-shell::before {
-    top: 10px;
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border: 1px solid rgba(20, 32, 34, 0.1);
+    border-radius: 6px;
+    pointer-events: none;
   }
 
   .cassette-shell::after {
-    bottom: 10px;
+    content: "";
+    position: absolute;
+    inset: auto 18px 70px;
+    height: 18px;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, rgba(239, 96, 75, 0.16), transparent 24%, transparent 76%, rgba(24, 184, 154, 0.16)),
+      repeating-linear-gradient(90deg, rgba(20, 32, 34, 0.13) 0 1px, transparent 1px 14px);
+    pointer-events: none;
   }
 
   .cassette-screws {
     position: absolute;
-    inset: 11px;
+    inset: 12px;
     pointer-events: none;
   }
 
   .screw {
     position: absolute;
-    width: 11px;
-    height: 11px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     background:
-      linear-gradient(90deg, transparent 45%, rgba(20, 18, 16, 0.62) 45% 55%, transparent 55%),
-      linear-gradient(180deg, #d7d0c4, #6f675b);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.62), 0 1px 1px rgba(0, 0, 0, 0.32);
+      linear-gradient(90deg, transparent 43%, rgba(20, 32, 34, 0.48) 43% 57%, transparent 57%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(163, 186, 192, 0.8));
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.82), 0 1px 2px rgba(20, 32, 34, 0.16);
   }
 
   .screw:nth-child(1) { left: 0; top: 0; }
@@ -144,16 +149,20 @@ const componentStyles = `
     z-index: 1;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-    align-items: start;
-    border: 1px solid rgba(24, 21, 17, 0.22);
-    border-radius: 7px;
+    gap: 14px;
+    align-items: center;
+    border: 1px solid rgba(20, 32, 34, 0.13);
+    border-radius: 8px;
     background:
-      linear-gradient(90deg, rgba(49, 109, 255, 0.16), transparent 38%),
-      repeating-linear-gradient(0deg, rgba(24, 21, 17, 0.08) 0 1px, transparent 1px 11px),
-      linear-gradient(180deg, #fff7e7, #eadbc4);
-    padding: 13px 14px 12px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 8px 18px rgba(0, 0, 0, 0.16);
+      linear-gradient(90deg, rgba(12, 143, 221, 0.1), transparent 32%, rgba(244, 198, 68, 0.12)),
+      repeating-linear-gradient(0deg, rgba(20, 32, 34, 0.055) 0 1px, transparent 1px 12px),
+      var(--asp-panel);
+    padding: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 12px 24px rgba(20, 32, 34, 0.08);
+  }
+
+  .glass-label {
+    backdrop-filter: blur(10px);
   }
 
   .head,
@@ -177,77 +186,81 @@ const componentStyles = `
   .eyebrow {
     display: inline-flex;
     align-items: center;
-    height: 20px;
-    padding: 0 7px;
-    border-left: 4px solid var(--asp-red);
-    background: rgba(255, 255, 255, 0.48);
-    color: #6b3028;
-    font-size: 10px;
-    font-weight: 900;
+    min-height: 22px;
+    border: 1px solid rgba(20, 32, 34, 0.11);
+    border-left: 4px solid var(--asp-coral);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.54);
+    color: #5f302a;
+    font-size: 11px;
+    font-weight: 820;
     letter-spacing: 0;
     text-transform: uppercase;
+    padding: 2px 8px 2px 7px;
   }
 
   .title {
     display: block;
-    margin-top: 6px;
+    margin-top: 8px;
     overflow: hidden;
     color: var(--asp-ink);
-    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
-    font-size: 17px;
-    font-weight: 780;
-    line-height: 1.2;
+    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.1;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .rate-readout {
-    min-width: 80px;
-    border-radius: 7px;
+    min-width: 86px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
     background:
-      linear-gradient(180deg, #24211d, #0d0c0a);
-    color: #ffe8a6;
+      linear-gradient(180deg, rgba(27, 43, 47, 0.96), rgba(9, 15, 17, 0.96));
+    color: #e8fff9;
     font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
     font-size: 19px;
-    font-weight: 850;
+    font-weight: 820;
     line-height: 1;
-    padding: 11px 10px;
+    padding: 12px 10px;
     text-align: center;
-    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.16), 0 2px 0 rgba(255, 255, 255, 0.28);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.16), 0 10px 20px rgba(20, 32, 34, 0.1);
   }
 
   .tape-window {
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: 1fr minmax(78px, 0.62fr) 1fr;
-    gap: 14px;
+    grid-template-columns: 1fr minmax(72px, 0.55fr) 1fr;
+    gap: 16px;
     align-items: center;
-    margin: 16px 8px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 999px;
+    margin: 14px 8px 14px;
+    border: 1px solid rgba(20, 32, 34, 0.14);
+    border-radius: 8px;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04)),
-      linear-gradient(90deg, #151310, #2d261d 50%, #151310);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(220, 235, 239, 0.28)),
+      linear-gradient(90deg, rgba(20, 32, 34, 0.82), rgba(36, 55, 59, 0.7) 52%, rgba(20, 32, 34, 0.82));
     box-shadow:
-      inset 0 4px 12px rgba(0, 0, 0, 0.55),
-      0 1px 0 rgba(255, 255, 255, 0.25);
-    padding: 13px 18px;
+      inset 0 12px 24px rgba(4, 10, 12, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 14px 26px rgba(20, 32, 34, 0.08);
+    padding: 14px 18px;
   }
 
   .reel {
     position: relative;
     aspect-ratio: 1;
-    width: min(104px, 100%);
+    width: min(96px, 100%);
     justify-self: center;
     border-radius: 50%;
     background:
-      radial-gradient(circle, #ede4d3 0 14%, transparent 15%),
-      conic-gradient(from 12deg, #eee5d7 0 10deg, #2b2824 10deg 28deg, #eee5d7 28deg 42deg, #2b2824 42deg 68deg, #eee5d7 68deg 82deg, #2b2824 82deg 112deg, #eee5d7 112deg 128deg, #2b2824 128deg 160deg, #eee5d7 160deg 176deg, #2b2824 176deg 210deg, #eee5d7 210deg 226deg, #2b2824 226deg 258deg, #eee5d7 258deg 274deg, #2b2824 274deg 306deg, #eee5d7 306deg 322deg, #2b2824 322deg 360deg);
+      radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 12%, transparent 13%),
+      conic-gradient(from 18deg, rgba(237, 247, 248, 0.92) 0 10deg, rgba(20, 32, 34, 0.9) 10deg 28deg, rgba(237, 247, 248, 0.92) 28deg 44deg, rgba(20, 32, 34, 0.88) 44deg 68deg, rgba(237, 247, 248, 0.9) 68deg 86deg, rgba(20, 32, 34, 0.9) 86deg 118deg, rgba(237, 247, 248, 0.92) 118deg 134deg, rgba(20, 32, 34, 0.86) 134deg 164deg, rgba(237, 247, 248, 0.92) 164deg 180deg, rgba(20, 32, 34, 0.9) 180deg 214deg, rgba(237, 247, 248, 0.92) 214deg 230deg, rgba(20, 32, 34, 0.88) 230deg 262deg, rgba(237, 247, 248, 0.92) 262deg 278deg, rgba(20, 32, 34, 0.9) 278deg 312deg, rgba(237, 247, 248, 0.92) 312deg 328deg, rgba(20, 32, 34, 0.9) 328deg 360deg);
     box-shadow:
-      inset 0 0 0 9px rgba(0, 0, 0, 0.28),
-      inset 0 0 0 20px rgba(246, 179, 61, 0.16),
-      0 5px 14px rgba(0, 0, 0, 0.42);
+      inset 0 0 0 8px rgba(255, 255, 255, 0.18),
+      inset 0 0 0 18px rgba(12, 143, 221, 0.1),
+      0 7px 18px rgba(4, 10, 12, 0.24);
     animation: reel-spin 3.8s linear infinite;
     animation-play-state: paused;
   }
@@ -257,7 +270,7 @@ const componentStyles = `
     position: absolute;
     inset: 37%;
     border-radius: 50%;
-    background: #151310;
+    background: #101b1d;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
   }
 
@@ -266,11 +279,11 @@ const componentStyles = `
   }
 
   .tape-bridge {
-    height: 18px;
+    height: 16px;
     border-radius: 999px;
     background:
-      linear-gradient(90deg, transparent, rgba(246, 179, 61, 0.18), transparent),
-      repeating-linear-gradient(90deg, #0d0c0a 0 11px, #181510 11px 18px);
+      linear-gradient(90deg, transparent, rgba(244, 198, 68, 0.22), transparent),
+      repeating-linear-gradient(90deg, #091113 0 10px, #1b2b2f 10px 17px);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
@@ -278,21 +291,33 @@ const componentStyles = `
     to { transform: rotate(360deg); }
   }
 
+  .control-deck {
+    position: relative;
+    z-index: 1;
+    border: 1px solid rgba(20, 32, 34, 0.12);
+    border-radius: 8px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(232, 242, 242, 0.66));
+    padding: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  }
+
   .drop-zone {
     display: grid;
     gap: 4px;
     margin: 0 0 12px;
-    min-height: 70px;
+    min-height: 64px;
     place-items: center;
-    border: 1px dashed rgba(24, 21, 17, 0.3);
-    border-radius: 7px;
+    border: 1px dashed rgba(20, 32, 34, 0.28);
+    border-radius: 8px;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(246, 238, 224, 0.72));
+      linear-gradient(90deg, rgba(24, 184, 154, 0.08), transparent 36%, rgba(239, 96, 75, 0.08)),
+      rgba(255, 255, 252, 0.68);
     color: var(--asp-muted);
     cursor: pointer;
-    padding: 12px;
+    padding: 11px 12px;
     text-align: center;
-    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+    transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
   }
 
   :host([no-upload]) .drop-zone {
@@ -302,9 +327,9 @@ const componentStyles = `
   .drop-zone:hover,
   .drop-zone.is-dragging,
   .drop-zone:focus-within {
-    border-color: var(--asp-red);
-    background: rgba(255, 255, 255, 0.86);
-    transform: translateY(-1px);
+    border-color: var(--asp-mint);
+    background: rgba(255, 255, 252, 0.86);
+    box-shadow: 0 8px 20px rgba(24, 184, 154, 0.12);
   }
 
   .file-input {
@@ -319,7 +344,7 @@ const componentStyles = `
   .drop-main {
     color: var(--asp-ink);
     font-size: 14px;
-    font-weight: 850;
+    font-weight: 820;
   }
 
   .drop-sub {
@@ -330,29 +355,50 @@ const componentStyles = `
     display: block;
     width: 100%;
     margin: 12px 0 0;
-    filter: sepia(0.12) saturate(0.9);
+    filter: saturate(0.96);
   }
 
   .control-row {
     display: grid;
-    grid-template-columns: minmax(62px, auto) 1fr;
-    margin-top: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 7px;
-    background: rgba(18, 16, 13, 0.38);
-    padding: 10px;
+    grid-template-columns: minmax(58px, auto) 1fr;
+    margin-top: 12px;
+    border: 1px solid rgba(20, 32, 34, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 252, 0.62);
+    padding: 10px 11px;
   }
 
   .range-label {
-    color: #f7e2ba;
+    color: #234047;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 820;
     text-transform: uppercase;
   }
 
   .rate-input {
     width: 100%;
     accent-color: var(--asp-accent);
+  }
+
+  .meter-track {
+    position: relative;
+    overflow: hidden;
+    height: 8px;
+    margin-top: 8px;
+    border: 1px solid rgba(20, 32, 34, 0.1);
+    border-radius: 999px;
+    background:
+      repeating-linear-gradient(90deg, rgba(20, 32, 34, 0.16) 0 1px, transparent 1px 10px),
+      rgba(255, 255, 252, 0.58);
+  }
+
+  .meter-track::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--asp-rate-progress);
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--asp-mint), var(--asp-accent), var(--asp-coral));
   }
 
   .preset-row {
@@ -362,40 +408,41 @@ const componentStyles = `
 
   button {
     min-height: 34px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 7px;
-    background: rgba(255, 250, 242, 0.86);
-    color: #231f19;
+    border: 1px solid rgba(20, 32, 34, 0.13);
+    border-radius: 8px;
+    background: rgba(255, 255, 252, 0.74);
+    color: #1a292d;
     cursor: pointer;
     font: inherit;
     font-size: 13px;
     font-weight: 780;
     padding: 6px 10px;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
   }
 
   button:hover {
-    border-color: rgba(246, 179, 61, 0.7);
+    border-color: rgba(12, 143, 221, 0.44);
     color: var(--asp-accent-strong);
   }
 
   button.is-active {
     border-color: var(--asp-accent);
-    background: var(--asp-accent);
+    background: #10282f;
     color: #ffffff;
   }
 
   .footer {
     justify-content: space-between;
     margin-top: 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
-    padding-top: 12px;
+    border-top: 1px solid rgba(20, 32, 34, 0.11);
+    padding-top: 11px;
   }
 
   .pitch-toggle {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #f3dfbd;
+    color: #2d4449;
     font-size: 13px;
     font-weight: 760;
   }
@@ -407,26 +454,42 @@ const componentStyles = `
   .status {
     margin: 10px 0 0;
     min-height: 18px;
-    color: #d6c3a2;
+    color: var(--asp-muted);
     font-size: 12px;
     line-height: 1.45;
   }
 
   @media (max-width: 520px) {
-    .cassette-label,
     .footer {
       align-items: stretch;
       grid-template-columns: 1fr;
     }
 
-    .head,
     .footer {
       flex-direction: column;
     }
 
-    .rate-readout,
     .reset-button {
       width: 100%;
+    }
+
+    .cassette-label {
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .eyebrow {
+      font-size: 10px;
+    }
+
+    .title {
+      font-size: 18px;
+    }
+
+    .rate-readout {
+      min-width: 74px;
+      font-size: 18px;
+      padding: 11px 9px;
     }
 
     .control-row {
@@ -441,7 +504,7 @@ const componentStyles = `
     }
 
     .reel {
-      width: min(76px, 100%);
+      width: min(72px, 100%);
     }
   }
 `;
@@ -586,7 +649,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this.shadowRoot.innerHTML = `
         <style>${componentStyles}</style>
         <section class="player" part="player">
-          <div class="cassette-shell" part="cassette-shell" aria-label="Cassette-style audio speed player">
+          <div class="cassette-shell glass-cassette" part="cassette-shell" aria-label="Cassette-style audio speed player">
             <div class="cassette-screws" aria-hidden="true">
               <span class="screw"></span>
               <span class="screw"></span>
@@ -594,10 +657,10 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
               <span class="screw"></span>
             </div>
 
-            <div class="cassette-label">
+            <div class="cassette-label glass-label">
               <div class="head">
                 <div class="title-wrap">
-                  <span class="eyebrow">cassette tempo</span>
+                  <span class="eyebrow">transparent cassette</span>
                   <strong class="title" part="title"></strong>
                 </div>
               </div>
@@ -610,30 +673,35 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
               <span class="reel reel-right"></span>
             </div>
 
-            <label class="drop-zone" part="drop-zone">
-              <input class="file-input" type="file" accept="audio/*" />
-              <span class="drop-main">Choose audio</span>
-              <span class="drop-sub">or drop a local file here</span>
-            </label>
-
-            <audio class="audio" part="audio" controls preload="metadata"></audio>
-
-            <div class="control-row">
-              <label class="range-label" for="audioSpeedPlayerRate">Speed</label>
-              <input id="audioSpeedPlayerRate" class="rate-input" part="rate-input" type="range" />
-            </div>
-
-            <div class="preset-row" part="preset-row" aria-label="Playback speed presets"></div>
-
-            <div class="footer">
-              <label class="pitch-toggle">
-                <input class="preserve-input" type="checkbox" />
-                <span>Keep pitch</span>
+            <div class="control-deck">
+              <label class="drop-zone" part="drop-zone">
+                <input class="file-input" type="file" accept="audio/*" />
+                <span class="drop-main">Choose audio</span>
+                <span class="drop-sub">or drop a local file here</span>
               </label>
-              <button class="reset-button" part="reset-button" type="button">Reset</button>
-            </div>
 
-            <p class="status" aria-live="polite"></p>
+              <audio class="audio" part="audio" controls preload="metadata"></audio>
+
+              <div class="speed-panel">
+                <div class="control-row">
+                  <label class="range-label" for="audioSpeedPlayerRate">Speed</label>
+                  <input id="audioSpeedPlayerRate" class="rate-input" part="rate-input" type="range" />
+                </div>
+                <div class="meter-track" aria-hidden="true"></div>
+              </div>
+
+              <div class="preset-row" part="preset-row" aria-label="Playback speed presets"></div>
+
+              <div class="footer">
+                <label class="pitch-toggle">
+                  <input class="preserve-input" type="checkbox" />
+                  <span>Keep pitch</span>
+                </label>
+                <button class="reset-button" part="reset-button" type="button">Reset</button>
+              </div>
+
+              <p class="status" aria-live="polite"></p>
+            </div>
           </div>
         </section>
       `;
@@ -749,6 +817,11 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       if (!this._parts.rateInput) return;
       this._parts.rateInput.value = String(this._rate);
       this._parts.rateReadout.textContent = formatRate(this._rate);
+      const low = Number(this._parts.rateInput.min);
+      const high = Number(this._parts.rateInput.max);
+      const span = high - low || 1;
+      const progress = ((this._rate - low) / span) * 100;
+      this.style.setProperty("--asp-rate-progress", `${Math.min(Math.max(progress, 0), 100)}%`);
       this._syncPresetButtons();
     }
 
