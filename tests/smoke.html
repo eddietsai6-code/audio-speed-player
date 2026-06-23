@@ -25,9 +25,13 @@
           slider.dispatchEvent(new Event("input", { bubbles: true }));
 
           const designChecks = {
-            hasGlassCassette: Boolean(shadow.querySelector(".cassette-shell.glass-cassette")),
+            hasMetaballsStage: Boolean(shadow.querySelector(".metaballs-stage")),
+            hasVisualizerCanvas: Boolean(shadow.querySelector(".visualizer-canvas")),
+            hasEnergyMeter: Boolean(shadow.querySelector(".energy-meter")),
             hasControlDeck: Boolean(shadow.querySelector(".control-deck")),
-            hasMeterTrack: Boolean(shadow.querySelector(".meter-track"))
+            hasMeterTrack: Boolean(shadow.querySelector(".meter-track")),
+            noCassetteShell: !shadow.querySelector(".cassette-shell"),
+            noReels: shadow.querySelectorAll(".reel").length === 0
           };
 
           result.textContent = JSON.stringify({

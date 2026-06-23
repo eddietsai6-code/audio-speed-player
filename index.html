@@ -6,12 +6,13 @@
     <title>Audio Speed Player</title>
     <style>
       :root {
-        --page-bg: #e7f1ef;
-        --ink: #142022;
-        --muted: #5d6e72;
-        --panel: rgba(255, 255, 252, 0.74);
-        --line: rgba(20, 32, 34, 0.14);
-        --coral: #ef604b;
+        --page-bg: #071216;
+        --ink: #eafff7;
+        --muted: #9db4b3;
+        --panel: rgba(9, 22, 27, 0.76);
+        --line: rgba(214, 255, 244, 0.14);
+        --coral: #ff6b5c;
+        --mint: #36f0b2;
       }
 
       * {
@@ -22,8 +23,10 @@
         margin: 0;
         min-height: 100vh;
         background:
-          linear-gradient(90deg, rgba(20, 32, 34, 0.055) 0 1px, transparent 1px 36px),
-          linear-gradient(180deg, #f8fbfb 0%, var(--page-bg) 58%, #f8f1df 100%);
+          radial-gradient(circle at 18% 20%, rgba(49, 214, 255, 0.2), transparent 30%),
+          radial-gradient(circle at 86% 12%, rgba(255, 107, 92, 0.15), transparent 30%),
+          linear-gradient(90deg, rgba(234, 255, 247, 0.04) 0 1px, transparent 1px 36px),
+          linear-gradient(180deg, #0b171d 0%, var(--page-bg) 58%, #05090c 100%);
         color: var(--ink);
         font-family: "Aptos", "Segoe UI", "Helvetica Neue", sans-serif;
       }
@@ -41,8 +44,13 @@
         align-items: center;
       }
 
+      .hero > * {
+        min-width: 0;
+      }
+
       .copy {
         max-width: 470px;
+        min-width: 0;
       }
 
       .kicker {
@@ -51,9 +59,9 @@
         border: 1px solid var(--line);
         border-left: 4px solid var(--coral);
         border-radius: 8px;
-        background: rgba(255, 255, 252, 0.58);
+        background: rgba(7, 18, 22, 0.58);
         margin: 0 0 16px;
-        color: #6a332d;
+        color: #ffd6cf;
         font-size: 13px;
         font-weight: 820;
         letter-spacing: 0;
@@ -68,6 +76,7 @@
         font-size: 64px;
         line-height: 0.96;
         letter-spacing: 0;
+        overflow-wrap: anywhere;
       }
 
       .intro {
@@ -83,13 +92,14 @@
         flex-wrap: wrap;
         gap: 8px;
         margin-top: 22px;
+        max-width: 100%;
       }
 
       .tags span {
         border: 1px solid var(--line);
         border-radius: 8px;
-        background: rgba(255, 255, 252, 0.54);
-        color: #284348;
+        background: rgba(255, 255, 255, 0.05);
+        color: #d8fff1;
         font-size: 13px;
         font-weight: 760;
         padding: 7px 9px;
@@ -112,7 +122,7 @@
         border: 1px solid var(--line);
         margin-top: 28px;
         background: var(--panel);
-        box-shadow: 0 18px 46px rgba(20, 32, 34, 0.08);
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.24);
         overflow: hidden;
       }
 
@@ -137,7 +147,7 @@
         margin: 0;
         overflow-x: auto;
         padding: 18px;
-        background: #102024;
+        background: #050d10;
         color: #eafff9;
         font-size: 13px;
         line-height: 1.7;
@@ -158,7 +168,7 @@
         min-height: 110px;
         border: 1px solid var(--line);
         border-radius: 8px;
-        background: rgba(255, 255, 252, 0.62);
+        background: rgba(255, 255, 255, 0.05);
         padding: 16px;
       }
 
@@ -175,17 +185,48 @@
 
       @media (max-width: 840px) {
         main {
-          width: min(100% - 24px, 640px);
+          width: calc(100% - 24px);
+          max-width: 640px;
           padding: 28px 0;
         }
 
         .hero,
         .notes {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
         }
 
         h1 {
-          font-size: 44px;
+          font-size: 40px;
+        }
+      }
+
+      @media (max-width: 460px) {
+        main {
+          width: calc(100% - 24px);
+          max-width: 420px;
+        }
+
+        .copy,
+        .intro {
+          max-width: 100%;
+        }
+
+        h1 {
+          font-size: 38px;
+        }
+
+        .tags {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .tags span {
+          overflow: hidden;
+          text-align: center;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-size: 12px;
+          padding: 7px 8px;
         }
       }
     </style>
@@ -196,12 +237,13 @@
       <section class="hero" aria-label="Audio Speed Player demo">
         <div class="copy">
           <p class="kicker">free web component</p>
-          <h1>Tempo Cassette</h1>
+          <h1>MetaBalls Tempo</h1>
           <p class="intro">
-            A reusable audio speed player for practice pages, lessons, and quick song study.
+            A reusable audio speed player with a rhythm-reactive fluid visualizer for practice pages and quick song study.
           </p>
           <div class="tags" aria-label="Project traits">
             <span>Web Component</span>
+            <span>Reactive canvas</span>
             <span>MIT</span>
             <span>No dependencies</span>
           </div>
@@ -223,8 +265,8 @@
 
       <section class="notes" aria-label="Project notes">
         <div class="note">
-          <b>Local first</b>
-          <span>Audio files stay in the browser when a student or teacher chooses a local file.</span>
+          <b>Audio reactive</b>
+          <span>The visualizer follows playback energy with Web Audio analysis when the track starts.</span>
         </div>
         <div class="note">
           <b>Pitch aware</b>
