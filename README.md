@@ -12,6 +12,23 @@ It has no framework dependency, no paid API, and no server requirement. It uses 
 <audio-speed-player></audio-speed-player>
 ```
 
+From GitHub Pages:
+
+```html
+<script
+  type="module"
+  src="https://eddietsai6-code.github.io/audio-speed-player/dist/audio-speed-player.js"
+></script>
+
+<audio-speed-player></audio-speed-player>
+```
+
+Demo page:
+
+```text
+https://eddietsai6-code.github.io/audio-speed-player/
+```
+
 With a default audio source:
 
 ```html
