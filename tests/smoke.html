@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Audio Speed Player Smoke</title>
+    <script type="module">
+      import "../dist/audio-speed-player.js";
+
+      const result = document.getElementById("result");
+
+      try {
+        await customElements.whenDefined("audio-speed-player");
+        const host = document.querySelector("audio-speed-player");
+        const shadow = host && host.shadowRoot;
+
+        if (!shadow) {
+          result.textContent = JSON.stringify({ ok: false, reason: "missing shadow root" });
+        } else {
+          const slider = shadow.querySelector(".rate-input");
+          const readout = shadow.querySelector(".rate-readout");
+          const audio = shadow.querySelector("audio");
+          const before = readout.textContent;
+
+          slider.value = "1.25";
+          slider.dispatchEvent(new Event("input", { bubbles: true }));
+
+          result.textContent = JSON.stringify({
+            ok: true,
+            defined: Boolean(customElements.get("audio-speed-player")),
+            title: shadow.querySelector(".title").textContent,
+            before,
+            after: readout.textContent,
+            audioRate: audio.playbackRate,
+            presetCount: shadow.querySelectorAll("[data-rate]").length,
+            hasUpload: Boolean(shadow.querySelector(".file-input")),
+            hasAudioControls: audio.hasAttribute("controls")
+          });
+        }
+      } catch (error) {
+        result.textContent = JSON.stringify({ ok: false, reason: error.message });
+      }
+    </script>
+  </head>
+  <body>
+    <audio-speed-player label="Smoke pad"></audio-speed-player>
+    <pre id="result">pending</pre>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "audio-speed-player",
+  "version": "0.1.0",
+  "description": "A free standalone Web Component for uploading audio and changing playback speed.",
+  "type": "module",
+  "module": "./dist/audio-speed-player.js",
+  "exports": {
+    ".": "./dist/audio-speed-player.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test tests/core.test.mjs"
+  },
+  "keywords": [
+    "audio",
+    "web-component",
+    "playback-rate",
+    "music-practice"
+  ],
+  "license": "MIT"
+}
