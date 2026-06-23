@@ -56,14 +56,15 @@ export function buildPresetRates(min, max, presets = DEFAULT_PRESET_RATES) {
 
 const componentStyles = `
   :host {
-    --asp-bg: #f7f1e8;
-    --asp-ink: #171512;
-    --asp-muted: #686056;
-    --asp-line: rgba(23, 21, 18, 0.16);
-    --asp-accent: #2b7cff;
-    --asp-accent-strong: #0d4fd8;
-    --asp-warm: #ffb238;
-    --asp-panel: #fffaf2;
+    --asp-bg: #2a2722;
+    --asp-ink: #181511;
+    --asp-muted: #756c5e;
+    --asp-line: rgba(24, 21, 17, 0.22);
+    --asp-accent: #316dff;
+    --asp-accent-strong: #123eaf;
+    --asp-warm: #f6b33d;
+    --asp-red: #e5533d;
+    --asp-panel: #f7eedf;
     --asp-radius: 8px;
     display: block;
     color: var(--asp-ink);
@@ -77,13 +78,82 @@ const componentStyles = `
   .player {
     width: 100%;
     min-width: 0;
-    border: 1px solid var(--asp-line);
+    border-radius: var(--asp-radius);
+  }
+
+  .cassette-shell {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--asp-radius);
     background:
-      linear-gradient(135deg, rgba(255, 178, 56, 0.18), transparent 34%),
-      linear-gradient(180deg, var(--asp-panel), var(--asp-bg));
-    box-shadow: 0 18px 40px rgba(23, 21, 18, 0.11);
-    padding: 16px;
+      radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.26), transparent 23%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.18), transparent 34%),
+      linear-gradient(180deg, #5f5a50 0%, #34312b 48%, #211f1c 100%);
+    box-shadow:
+      0 28px 64px rgba(14, 11, 8, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      inset 0 -14px 34px rgba(0, 0, 0, 0.28);
+    padding: 18px;
+  }
+
+  .cassette-shell::before,
+  .cassette-shell::after {
+    content: "";
+    position: absolute;
+    inset-inline: 16px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.18);
+    pointer-events: none;
+  }
+
+  .cassette-shell::before {
+    top: 10px;
+  }
+
+  .cassette-shell::after {
+    bottom: 10px;
+  }
+
+  .cassette-screws {
+    position: absolute;
+    inset: 11px;
+    pointer-events: none;
+  }
+
+  .screw {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background:
+      linear-gradient(90deg, transparent 45%, rgba(20, 18, 16, 0.62) 45% 55%, transparent 55%),
+      linear-gradient(180deg, #d7d0c4, #6f675b);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.62), 0 1px 1px rgba(0, 0, 0, 0.32);
+  }
+
+  .screw:nth-child(1) { left: 0; top: 0; }
+  .screw:nth-child(2) { right: 0; top: 0; }
+  .screw:nth-child(3) { left: 0; bottom: 0; }
+  .screw:nth-child(4) { right: 0; bottom: 0; }
+
+  .cassette-label {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+    border: 1px solid rgba(24, 21, 17, 0.22);
+    border-radius: 7px;
+    background:
+      linear-gradient(90deg, rgba(49, 109, 255, 0.16), transparent 38%),
+      repeating-linear-gradient(0deg, rgba(24, 21, 17, 0.08) 0 1px, transparent 1px 11px),
+      linear-gradient(180deg, #fff7e7, #eadbc4);
+    padding: 13px 14px 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 8px 18px rgba(0, 0, 0, 0.16);
   }
 
   .head,
@@ -96,8 +166,8 @@ const componentStyles = `
   }
 
   .head {
+    min-width: 0;
     justify-content: space-between;
-    margin-bottom: 12px;
   }
 
   .title-wrap {
@@ -107,14 +177,13 @@ const componentStyles = `
   .eyebrow {
     display: inline-flex;
     align-items: center;
-    height: 22px;
-    padding: 0 8px;
-    border: 1px solid rgba(43, 124, 255, 0.24);
-    border-radius: 999px;
-    background: rgba(43, 124, 255, 0.08);
-    color: var(--asp-accent-strong);
-    font-size: 11px;
-    font-weight: 800;
+    height: 20px;
+    padding: 0 7px;
+    border-left: 4px solid var(--asp-red);
+    background: rgba(255, 255, 255, 0.48);
+    color: #6b3028;
+    font-size: 10px;
+    font-weight: 900;
     letter-spacing: 0;
     text-transform: uppercase;
   }
@@ -124,37 +193,104 @@ const componentStyles = `
     margin-top: 6px;
     overflow: hidden;
     color: var(--asp-ink);
-    font-size: 18px;
-    font-weight: 820;
-    line-height: 1.15;
+    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 17px;
+    font-weight: 780;
+    line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .rate-readout {
-    min-width: 74px;
+    min-width: 80px;
     border-radius: 7px;
-    background: var(--asp-ink);
-    color: #fffaf2;
-    font-size: 20px;
+    background:
+      linear-gradient(180deg, #24211d, #0d0c0a);
+    color: #ffe8a6;
+    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 19px;
     font-weight: 850;
     line-height: 1;
-    padding: 12px 10px;
+    padding: 11px 10px;
     text-align: center;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.16), 0 2px 0 rgba(255, 255, 255, 0.28);
+  }
+
+  .tape-window {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr minmax(78px, 0.62fr) 1fr;
+    gap: 14px;
+    align-items: center;
+    margin: 16px 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04)),
+      linear-gradient(90deg, #151310, #2d261d 50%, #151310);
+    box-shadow:
+      inset 0 4px 12px rgba(0, 0, 0, 0.55),
+      0 1px 0 rgba(255, 255, 255, 0.25);
+    padding: 13px 18px;
+  }
+
+  .reel {
+    position: relative;
+    aspect-ratio: 1;
+    width: min(104px, 100%);
+    justify-self: center;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, #ede4d3 0 14%, transparent 15%),
+      conic-gradient(from 12deg, #eee5d7 0 10deg, #2b2824 10deg 28deg, #eee5d7 28deg 42deg, #2b2824 42deg 68deg, #eee5d7 68deg 82deg, #2b2824 82deg 112deg, #eee5d7 112deg 128deg, #2b2824 128deg 160deg, #eee5d7 160deg 176deg, #2b2824 176deg 210deg, #eee5d7 210deg 226deg, #2b2824 226deg 258deg, #eee5d7 258deg 274deg, #2b2824 274deg 306deg, #eee5d7 306deg 322deg, #2b2824 322deg 360deg);
+    box-shadow:
+      inset 0 0 0 9px rgba(0, 0, 0, 0.28),
+      inset 0 0 0 20px rgba(246, 179, 61, 0.16),
+      0 5px 14px rgba(0, 0, 0, 0.42);
+    animation: reel-spin 3.8s linear infinite;
+    animation-play-state: paused;
+  }
+
+  .reel::after {
+    content: "";
+    position: absolute;
+    inset: 37%;
+    border-radius: 50%;
+    background: #151310;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  }
+
+  :host([playing]) .reel {
+    animation-play-state: running;
+  }
+
+  .tape-bridge {
+    height: 18px;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, transparent, rgba(246, 179, 61, 0.18), transparent),
+      repeating-linear-gradient(90deg, #0d0c0a 0 11px, #181510 11px 18px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  @keyframes reel-spin {
+    to { transform: rotate(360deg); }
   }
 
   .drop-zone {
     display: grid;
     gap: 4px;
-    margin-bottom: 12px;
-    min-height: 82px;
+    margin: 0 0 12px;
+    min-height: 70px;
     place-items: center;
-    border: 1px dashed rgba(23, 21, 18, 0.32);
-    border-radius: var(--asp-radius);
-    background: rgba(255, 255, 255, 0.54);
+    border: 1px dashed rgba(24, 21, 17, 0.3);
+    border-radius: 7px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(246, 238, 224, 0.72));
     color: var(--asp-muted);
     cursor: pointer;
-    padding: 14px;
+    padding: 12px;
     text-align: center;
     transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
   }
@@ -166,8 +302,8 @@ const componentStyles = `
   .drop-zone:hover,
   .drop-zone.is-dragging,
   .drop-zone:focus-within {
-    border-color: var(--asp-accent);
-    background: rgba(43, 124, 255, 0.08);
+    border-color: var(--asp-red);
+    background: rgba(255, 255, 255, 0.86);
     transform: translateY(-1px);
   }
 
@@ -182,8 +318,8 @@ const componentStyles = `
 
   .drop-main {
     color: var(--asp-ink);
-    font-size: 15px;
-    font-weight: 800;
+    font-size: 14px;
+    font-weight: 850;
   }
 
   .drop-sub {
@@ -193,17 +329,22 @@ const componentStyles = `
   audio {
     display: block;
     width: 100%;
-    margin: 12px 0;
+    margin: 12px 0 0;
+    filter: sepia(0.12) saturate(0.9);
   }
 
   .control-row {
     display: grid;
-    grid-template-columns: minmax(64px, auto) 1fr;
-    margin-top: 8px;
+    grid-template-columns: minmax(62px, auto) 1fr;
+    margin-top: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 7px;
+    background: rgba(18, 16, 13, 0.38);
+    padding: 10px;
   }
 
   .range-label {
-    color: var(--asp-muted);
+    color: #f7e2ba;
     font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
@@ -221,10 +362,10 @@ const componentStyles = `
 
   button {
     min-height: 34px;
-    border: 1px solid var(--asp-line);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 7px;
-    background: rgba(255, 255, 255, 0.66);
-    color: var(--asp-ink);
+    background: rgba(255, 250, 242, 0.86);
+    color: #231f19;
     cursor: pointer;
     font: inherit;
     font-size: 13px;
@@ -233,7 +374,7 @@ const componentStyles = `
   }
 
   button:hover {
-    border-color: rgba(43, 124, 255, 0.45);
+    border-color: rgba(246, 179, 61, 0.7);
     color: var(--asp-accent-strong);
   }
 
@@ -246,7 +387,7 @@ const componentStyles = `
   .footer {
     justify-content: space-between;
     margin-top: 14px;
-    border-top: 1px solid var(--asp-line);
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
     padding-top: 12px;
   }
 
@@ -254,7 +395,7 @@ const componentStyles = `
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--asp-muted);
+    color: #f3dfbd;
     font-size: 13px;
     font-weight: 760;
   }
@@ -266,15 +407,20 @@ const componentStyles = `
   .status {
     margin: 10px 0 0;
     min-height: 18px;
-    color: var(--asp-muted);
+    color: #d6c3a2;
     font-size: 12px;
     line-height: 1.45;
   }
 
   @media (max-width: 520px) {
-    .head,
+    .cassette-label,
     .footer {
       align-items: stretch;
+      grid-template-columns: 1fr;
+    }
+
+    .head,
+    .footer {
       flex-direction: column;
     }
 
@@ -285,6 +431,17 @@ const componentStyles = `
 
     .control-row {
       grid-template-columns: 1fr;
+    }
+
+    .tape-window {
+      grid-template-columns: 1fr 0.45fr 1fr;
+      gap: 8px;
+      margin-inline: 0;
+      padding: 11px 13px;
+    }
+
+    .reel {
+      width: min(76px, 100%);
     }
   }
 `;
@@ -429,38 +586,55 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this.shadowRoot.innerHTML = `
         <style>${componentStyles}</style>
         <section class="player" part="player">
-          <div class="head">
-            <div class="title-wrap">
-              <span class="eyebrow">tempo tool</span>
-              <strong class="title" part="title"></strong>
+          <div class="cassette-shell" part="cassette-shell" aria-label="Cassette-style audio speed player">
+            <div class="cassette-screws" aria-hidden="true">
+              <span class="screw"></span>
+              <span class="screw"></span>
+              <span class="screw"></span>
+              <span class="screw"></span>
             </div>
-            <output class="rate-readout" part="rate-readout" aria-live="polite">1x</output>
-          </div>
 
-          <label class="drop-zone" part="drop-zone">
-            <input class="file-input" type="file" accept="audio/*" />
-            <span class="drop-main">Choose audio</span>
-            <span class="drop-sub">or drop a local file here</span>
-          </label>
+            <div class="cassette-label">
+              <div class="head">
+                <div class="title-wrap">
+                  <span class="eyebrow">cassette tempo</span>
+                  <strong class="title" part="title"></strong>
+                </div>
+              </div>
+              <output class="rate-readout" part="rate-readout" aria-live="polite">1x</output>
+            </div>
 
-          <audio class="audio" part="audio" controls preload="metadata"></audio>
+            <div class="tape-window" aria-hidden="true">
+              <span class="reel reel-left"></span>
+              <span class="tape-bridge"></span>
+              <span class="reel reel-right"></span>
+            </div>
 
-          <div class="control-row">
-            <label class="range-label" for="audioSpeedPlayerRate">Speed</label>
-            <input id="audioSpeedPlayerRate" class="rate-input" part="rate-input" type="range" />
-          </div>
-
-          <div class="preset-row" part="preset-row" aria-label="Playback speed presets"></div>
-
-          <div class="footer">
-            <label class="pitch-toggle">
-              <input class="preserve-input" type="checkbox" />
-              <span>Keep pitch</span>
+            <label class="drop-zone" part="drop-zone">
+              <input class="file-input" type="file" accept="audio/*" />
+              <span class="drop-main">Choose audio</span>
+              <span class="drop-sub">or drop a local file here</span>
             </label>
-            <button class="reset-button" part="reset-button" type="button">Reset</button>
-          </div>
 
-          <p class="status" aria-live="polite"></p>
+            <audio class="audio" part="audio" controls preload="metadata"></audio>
+
+            <div class="control-row">
+              <label class="range-label" for="audioSpeedPlayerRate">Speed</label>
+              <input id="audioSpeedPlayerRate" class="rate-input" part="rate-input" type="range" />
+            </div>
+
+            <div class="preset-row" part="preset-row" aria-label="Playback speed presets"></div>
+
+            <div class="footer">
+              <label class="pitch-toggle">
+                <input class="preserve-input" type="checkbox" />
+                <span>Keep pitch</span>
+              </label>
+              <button class="reset-button" part="reset-button" type="button">Reset</button>
+            </div>
+
+            <p class="status" aria-live="polite"></p>
+          </div>
         </section>
       `;
     }
@@ -530,6 +704,18 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         if (audio.playbackRate !== this._rate) {
           this.setRate(audio.playbackRate, { reflect: true });
         }
+      });
+
+      audio.addEventListener("play", () => {
+        this.toggleAttribute("playing", true);
+      });
+
+      audio.addEventListener("pause", () => {
+        this.toggleAttribute("playing", false);
+      });
+
+      audio.addEventListener("ended", () => {
+        this.toggleAttribute("playing", false);
       });
     }
 

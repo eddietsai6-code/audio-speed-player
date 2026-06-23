@@ -6,10 +6,10 @@
     <title>Audio Speed Player</title>
     <style>
       :root {
-        --page-bg: #efe7dc;
+        --page-bg: #dfeee8;
         --ink: #15130f;
-        --muted: #675f55;
-        --panel: #fffaf2;
+        --muted: #4e635d;
+        --panel: #fbfff7;
         --line: rgba(21, 19, 15, 0.15);
         --blue: #2b7cff;
         --gold: #ffb238;
@@ -24,8 +24,9 @@
         margin: 0;
         min-height: 100vh;
         background:
-          linear-gradient(135deg, rgba(255, 178, 56, 0.22), transparent 28%),
-          linear-gradient(180deg, #fff9ef 0%, var(--page-bg) 100%);
+          linear-gradient(135deg, rgba(43, 124, 255, 0.14), transparent 28%),
+          linear-gradient(215deg, rgba(255, 178, 56, 0.18), transparent 34%),
+          linear-gradient(180deg, #f8fff5 0%, var(--page-bg) 100%);
         color: var(--ink);
         font-family: "Aptos", "Segoe UI", "Helvetica Neue", sans-serif;
       }
@@ -77,18 +78,18 @@
 
       .demo-panel,
       .snippet-panel {
-        border: 1px solid var(--line);
         border-radius: 8px;
-        background: rgba(255, 250, 242, 0.76);
-        box-shadow: 0 20px 60px rgba(21, 19, 15, 0.12);
       }
 
       .demo-panel {
-        padding: 16px;
+        padding: 0;
       }
 
       .snippet-panel {
+        border: 1px solid var(--line);
         margin-top: 28px;
+        background: rgba(251, 255, 247, 0.78);
+        box-shadow: 0 20px 60px rgba(21, 19, 15, 0.12);
         overflow: hidden;
       }
 
@@ -172,9 +173,10 @@
       <section class="hero" aria-label="Audio Speed Player demo">
         <div class="copy">
           <p class="kicker">free web component</p>
-          <h1>Audio Speed Player</h1>
+          <h1>Cassette Tempo Player</h1>
           <p class="intro">
             A tiny reusable browser plugin for local audio practice, tempo changes, and drop-in lesson pages.
+            Styled like a compact tape deck, built with native web audio controls.
           </p>
         </div>
 

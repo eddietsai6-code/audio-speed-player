@@ -1,6 +1,6 @@
 # Audio Speed Player
 
-A free standalone Web Component for uploading audio and changing playback speed in the browser.
+A free standalone cassette-style Web Component for uploading audio and changing playback speed in the browser.
 
 It has no framework dependency, no paid API, and no server requirement. The first version uses native browser audio playback, including `HTMLAudioElement.playbackRate` and `preservesPitch` where supported.
 
