@@ -14,6 +14,7 @@ import {
   parseBooleanAttribute,
   parseRateAttribute
 } from "../dist/audio-speed-player.js";
+import { createRubberBandEngine } from "../src/pro/rubberband-engine.js";
 
 function createFakeAudio() {
   return {
@@ -166,6 +167,34 @@ test("formatEngineStatus describes active and fallback engines", () => {
     formatEngineStatus(ENGINE_NATIVE, ENGINE_RUBBERBAND),
     "Professional engine unavailable, using native engine"
   );
+});
+
+test("createRubberBandEngine exposes the professional engine boundary", () => {
+  const engine = createRubberBandEngine({
+    audioContext: { sampleRate: 48000 },
+    wasmUrl: "./rubberband.wasm",
+    workletUrl: "./audio-speed-player-pro.worklet.js"
+  });
+
+  assert.equal(engine.name, ENGINE_RUBBERBAND);
+  assert.equal(engine.unavailableReason, "");
+  assert.equal(engine.wasmUrl, "./rubberband.wasm");
+  assert.equal(engine.workletUrl, "./audio-speed-player-pro.worklet.js");
+  assert.equal(typeof engine.loadSource, "function");
+  assert.equal(typeof engine.play, "function");
+  assert.equal(typeof engine.pause, "function");
+  assert.equal(typeof engine.setRate, "function");
+  assert.equal(typeof engine.setPreservePitch, "function");
+  assert.equal(typeof engine.connectAnalyser, "function");
+  assert.equal(typeof engine.destroy, "function");
+  assert.equal(engine.connectAnalyser(), false);
+});
+
+test("createRubberBandEngine reports when AudioContext is unavailable", () => {
+  const engine = createRubberBandEngine();
+
+  assert.equal(engine.name, ENGINE_RUBBERBAND);
+  assert.equal(engine.unavailableReason, "AudioContext unavailable");
 });
 
 test("buildPresetRates filters and sorts preset speeds", () => {
