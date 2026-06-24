@@ -358,6 +358,68 @@ test("RubberBandEngine decodes sources and posts buffers to the worklet", async 
   assert.deepEqual(postedMessages[0].transfers, [postedMessages[0].message.channelData[0].buffer]);
 });
 
+test("RubberBandEngine initializes the worklet with WASM before posting buffers", async () => {
+  const postedMessages = [];
+  const sourceBytes = new Uint8Array([1, 2, 3]).buffer;
+  const wasmBytes = new Uint8Array([0, 97, 115, 109]).buffer;
+
+  function FakeAudioWorkletNode() {
+    return {
+      port: {
+        postMessage(message, transfers) {
+          postedMessages.push({ message, transfers });
+        }
+      },
+      connect() {},
+      disconnect() {}
+    };
+  }
+
+  const engine = createRubberBandEngine({
+    audioContext: {
+      sampleRate: 44100,
+      destination: "speakers",
+      audioWorklet: {
+        async addModule() {}
+      },
+      async decodeAudioData() {
+        return {
+          numberOfChannels: 1,
+          sampleRate: 44100,
+          getChannelData() {
+            return Float32Array.from([0, 0.5, 1]);
+          }
+        };
+      }
+    },
+    hooks: {
+      AudioWorkletNode: FakeAudioWorkletNode,
+      async fetch(url) {
+        return {
+          async arrayBuffer() {
+            if (url === "./rubberband.wasm") return wasmBytes;
+            if (url === "./lesson.mp3") return sourceBytes;
+            throw new Error(`Unexpected URL ${url}`);
+          }
+        };
+      }
+    },
+    wasmUrl: "./rubberband.wasm",
+    workletUrl: "./audio-speed-player-pro.worklet.js"
+  });
+
+  engine.setRate(0.75);
+  await engine.loadSource("./lesson.mp3");
+
+  assert.equal(postedMessages[0].message.type, "init-rubberband");
+  assert.equal(postedMessages[0].message.sampleRate, 44100);
+  assert.equal(postedMessages[0].message.channels, 1);
+  assert.equal(postedMessages[0].message.rate, 0.75);
+  assert.equal(postedMessages[0].message.wasmBinary, wasmBytes);
+  assert.deepEqual(postedMessages[0].transfers, [wasmBytes]);
+  assert.equal(postedMessages[1].message.type, "load-buffer");
+});
+
 test("buildPresetRates filters and sorts preset speeds", () => {
   assert.deepEqual(buildPresetRates(0.75, 1.25, [1.5, 1, 0.5, 0.75, 1.25]), [0.75, 1, 1.25]);
 });

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Audio Speed Player Rubber Band Module Smoke</title>
+    <script type="module">
+      import createAudioSpeedPlayerRubberBandModule from "../dist/audio-speed-player-rubberband.mjs";
+
+      const result = document.getElementById("result");
+
+      try {
+        const module = await createAudioSpeedPlayerRubberBandModule({
+          locateFile(path) {
+            if (path.endsWith(".wasm")) {
+              return "../dist/audio-speed-player-rubberband.wasm";
+            }
+
+            return path;
+          }
+        });
+
+        const version = module.UTF8ToString(module._asp_rubberband_version());
+        const state = module._asp_rubberband_create(44100, 1, 1);
+        const engineVersion = module._asp_rubberband_engine_version(state);
+        const required = module._asp_rubberband_samples_required(state);
+        module._asp_rubberband_destroy(state);
+
+        result.textContent = JSON.stringify({
+          ok: version === "4.0.0" && state > 0 && engineVersion > 0,
+          version,
+          stateCreated: state > 0,
+          engineVersion,
+          required
+        });
+      } catch (error) {
+        result.textContent = JSON.stringify({
+          ok: false,
+          reason: error.message
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <pre id="result">pending</pre>
+  </body>
+</html>

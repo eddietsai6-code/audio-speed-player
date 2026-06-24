@@ -12,7 +12,7 @@
           throw new Error("AudioContext unavailable");
         }
 
-        const context = new OfflineAudioContext(1, 128, 44100);
+        const context = new OfflineAudioContext(1, 8192, 44100);
         await context.audioWorklet.addModule("../dist/audio-speed-player-pro.worklet.js");
         const node = new AudioWorkletNode(context, "audio-speed-player-rubberband");
         node.connect(context.destination);
@@ -35,10 +35,27 @@
             node.port.start?.();
           });
 
+        const ready = waitForMessage("rubberband-ready");
+        const wasmBinary = await fetch("../dist/audio-speed-player-rubberband.wasm").then((response) =>
+          response.arrayBuffer()
+        );
+        node.port.postMessage(
+          {
+            type: "init-rubberband",
+            wasmBinary,
+            sampleRate: 44100,
+            channels: 1,
+            rate: 1,
+            preservePitch: true
+          },
+          [wasmBinary]
+        );
+        const readyMessage = await ready;
+
         const loaded = waitForMessage("buffer-loaded");
         node.port.postMessage({
           type: "load-buffer",
-          channelData: [Float32Array.from({ length: 128 }, (_, index) => index / 128)],
+          channelData: [Float32Array.from({ length: 8192 }, (_, index) => Math.sin(index * 0.04) * 0.5)],
           sampleRate: 44100
         });
         const loadMessage = await loaded;
@@ -52,8 +69,11 @@
         const renderedNonZero = output.some((sample) => Math.abs(sample) > 0.0001);
 
         result.textContent = JSON.stringify({
-          ok: renderedNonZero,
+          ok: readyMessage.version === "4.0.0" && renderedNonZero,
           workletLoaded: true,
+          rubberbandReady: readyMessage.version === "4.0.0",
+          rubberbandVersion: readyMessage.version,
+          rubberbandEngineVersion: readyMessage.engineVersion,
           loadedFrames: loadMessage.frames,
           renderedNonZero
         });

@@ -2,6 +2,7 @@ import { ENGINE_RUBBERBAND } from "../../dist/audio-speed-player.js";
 
 export const RUBBERBAND_PROCESSOR_NAME = "audio-speed-player-rubberband";
 export const RUBBERBAND_WORKLET_MESSAGE_TYPES = new Set([
+  "init-rubberband",
   "load-buffer",
   "set-rate",
   "set-preserve-pitch",
@@ -82,6 +83,8 @@ export function createRubberBandEngine(options = {}) {
   const hooks = options.hooks || globalThis;
   let unavailableReason = !audioContext ? "AudioContext unavailable" : "";
   let workletNode = null;
+  let rate = 1;
+  let preservePitch = true;
 
   async function ensureWorkletNode() {
     if (!audioContext) {
@@ -123,6 +126,21 @@ export function createRubberBandEngine(options = {}) {
         const node = await ensureWorkletNode();
         const bytes = await fetchArrayBuffer(source, hooks);
         const decoded = await audioContext.decodeAudioData(bytes);
+
+        if (wasmUrl) {
+          const wasmBinary = await fetchArrayBuffer(wasmUrl, hooks);
+          node.port.postMessage(
+            createRubberBandMessage("init-rubberband", {
+              wasmBinary,
+              sampleRate: decoded.sampleRate,
+              channels: decoded.numberOfChannels,
+              rate,
+              preservePitch
+            }),
+            [wasmBinary]
+          );
+        }
+
         const message = createLoadBufferMessage(decoded);
         node.port.postMessage(message, getRubberBandMessageTransfers(message));
         unavailableReason = "";
@@ -138,15 +156,16 @@ export function createRubberBandEngine(options = {}) {
     pause() {
       workletNode?.port?.postMessage(createRubberBandMessage("pause"));
     },
-    setRate(rate) {
-      const nextRate = Number(rate);
+    setRate(value) {
+      const nextRate = Number(value);
       if (Number.isFinite(nextRate)) {
+        rate = nextRate;
         workletNode?.port?.postMessage(createRubberBandMessage("set-rate", { rate: nextRate }));
       }
       return nextRate;
     },
     setPreservePitch(value) {
-      const preservePitch = Boolean(value);
+      preservePitch = Boolean(value);
       workletNode?.port?.postMessage(createRubberBandMessage("set-preserve-pitch", { preservePitch }));
       return preservePitch;
     },
