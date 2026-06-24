@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Audio Speed Player Pro Worklet Smoke</title>
+    <script type="module">
+      const result = document.getElementById("result");
+
+      try {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) {
+          throw new Error("AudioContext unavailable");
+        }
+
+        const context = new AudioContextCtor();
+        await context.audioWorklet.addModule("../dist/audio-speed-player-pro.worklet.js");
+        await context.close();
+
+        result.textContent = JSON.stringify({
+          ok: true,
+          workletLoaded: true
+        });
+      } catch (error) {
+        result.textContent = JSON.stringify({
+          ok: false,
+          workletLoaded: false,
+          reason: error.message
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <pre id="result">pending</pre>
+  </body>
+</html>
