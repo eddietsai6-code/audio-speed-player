@@ -37,12 +37,34 @@ With a default audio source:
 <audio-speed-player src="./song.mp3" label="Lesson track"></audio-speed-player>
 ```
 
+## Engine Modes
+
+The default build uses the native browser engine:
+
+```html
+<audio-speed-player src="./song.mp3" engine="native"></audio-speed-player>
+```
+
+You can request professional mode with:
+
+```html
+<audio-speed-player src="./song.mp3" engine="rubberband"></audio-speed-player>
+```
+
+The current public build falls back to native playback when the professional engine is
+not available. A future professional build will bundle a Rubber Band WebAssembly
+engine for higher quality time-stretching.
+
+The native build remains MIT-compatible. A build that bundles Rubber Band must be
+GPL-compatible unless a commercial Rubber Band license is used.
+
 ## Attributes
 
 | Attribute | Default | Description |
 | --- | --- | --- |
 | `src` | empty | Optional audio URL. |
 | `label` | `Audio Speed Player` | Player title. |
+| `engine` | `native` | Playback engine. Use `native` for browser playback. `rubberband` requests professional mode and falls back to native until the professional build is loaded. |
 | `rate` | `1` | Initial playback speed. |
 | `min-rate` | `0.25` | Minimum slider speed. |
 | `max-rate` | `2` | Maximum slider speed. |
