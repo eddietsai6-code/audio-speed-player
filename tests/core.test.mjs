@@ -14,7 +14,13 @@ import {
   parseBooleanAttribute,
   parseRateAttribute
 } from "../dist/audio-speed-player.js";
-import { createRubberBandEngine, loadRubberBandWasm } from "../src/pro/rubberband-engine.js";
+import {
+  createLoadBufferMessage,
+  createRubberBandEngine,
+  createRubberBandMessage,
+  getRubberBandMessageTransfers,
+  loadRubberBandWasm
+} from "../src/pro/rubberband-engine.js";
 
 function createFakeAudio() {
   return {
@@ -240,6 +246,116 @@ test("loadRubberBandWasm falls back to arrayBuffer instantiation", async () => {
 
 test("loadRubberBandWasm rejects missing wasm urls", async () => {
   await assert.rejects(() => loadRubberBandWasm("", {}), /Rubber Band WASM URL is required/);
+});
+
+test("createRubberBandMessage accepts explicit professional worklet controls", () => {
+  assert.deepEqual(createRubberBandMessage("set-rate", { rate: 1.25 }), {
+    type: "set-rate",
+    rate: 1.25
+  });
+  assert.deepEqual(createRubberBandMessage("set-preserve-pitch", { preservePitch: false }), {
+    type: "set-preserve-pitch",
+    preservePitch: false
+  });
+  assert.deepEqual(createRubberBandMessage("seek", { seconds: 12.5 }), {
+    type: "seek",
+    seconds: 12.5
+  });
+  assert.deepEqual(createRubberBandMessage("play"), { type: "play" });
+  assert.deepEqual(createRubberBandMessage("pause"), { type: "pause" });
+  assert.throws(() => createRubberBandMessage("unknown"), /Unsupported Rubber Band worklet message/);
+});
+
+test("createLoadBufferMessage copies decoded channel data for worklet transfer", () => {
+  const left = Float32Array.from([0, 0.25, 0.5]);
+  const right = Float32Array.from([1, 0.5, 0]);
+  const message = createLoadBufferMessage({
+    numberOfChannels: 2,
+    sampleRate: 44100,
+    getChannelData(index) {
+      return index === 0 ? left : right;
+    }
+  });
+
+  assert.equal(message.type, "load-buffer");
+  assert.equal(message.sampleRate, 44100);
+  assert.equal(message.channelData.length, 2);
+  assert.deepEqual(Array.from(message.channelData[0]), [0, 0.25, 0.5]);
+  assert.deepEqual(Array.from(message.channelData[1]), [1, 0.5, 0]);
+  assert.notEqual(message.channelData[0], left);
+  assert.notEqual(message.channelData[1], right);
+  assert.deepEqual(getRubberBandMessageTransfers(message), [
+    message.channelData[0].buffer,
+    message.channelData[1].buffer
+  ]);
+});
+
+test("RubberBandEngine decodes sources and posts buffers to the worklet", async () => {
+  const postedMessages = [];
+  const loadedModules = [];
+  const connectedTargets = [];
+  const sourceBytes = new Uint8Array([1, 2, 3]).buffer;
+  const left = Float32Array.from([0, 0.5, 1]);
+
+  function FakeAudioWorkletNode(context, processorName) {
+    assert.equal(context.sampleRate, 48000);
+    assert.equal(processorName, "audio-speed-player-rubberband");
+    return {
+      port: {
+        postMessage(message, transfers) {
+          postedMessages.push({ message, transfers });
+        }
+      },
+      connect(target) {
+        connectedTargets.push(target);
+      },
+      disconnect() {}
+    };
+  }
+
+  const engine = createRubberBandEngine({
+    audioContext: {
+      sampleRate: 48000,
+      destination: "speakers",
+      audioWorklet: {
+        async addModule(url) {
+          loadedModules.push(url);
+        }
+      },
+      async decodeAudioData(buffer) {
+        assert.equal(buffer, sourceBytes);
+        return {
+          numberOfChannels: 1,
+          sampleRate: 48000,
+          getChannelData() {
+            return left;
+          }
+        };
+      }
+    },
+    hooks: {
+      AudioWorkletNode: FakeAudioWorkletNode,
+      async fetch(url) {
+        assert.equal(url, "./lesson.mp3");
+        return {
+          async arrayBuffer() {
+            return sourceBytes;
+          }
+        };
+      }
+    },
+    workletUrl: "./audio-speed-player-pro.worklet.js"
+  });
+
+  assert.equal(await engine.loadSource("./lesson.mp3"), "./lesson.mp3");
+
+  assert.deepEqual(loadedModules, ["./audio-speed-player-pro.worklet.js"]);
+  assert.deepEqual(connectedTargets, ["speakers"]);
+  assert.equal(postedMessages.length, 1);
+  assert.equal(postedMessages[0].message.type, "load-buffer");
+  assert.equal(postedMessages[0].message.sampleRate, 48000);
+  assert.deepEqual(Array.from(postedMessages[0].message.channelData[0]), [0, 0.5, 1]);
+  assert.deepEqual(postedMessages[0].transfers, [postedMessages[0].message.channelData[0].buffer]);
 });
 
 test("buildPresetRates filters and sorts preset speeds", () => {
