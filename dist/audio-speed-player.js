@@ -2,7 +2,7 @@ export const DEFAULT_MIN_RATE = 0.25;
 export const DEFAULT_MAX_RATE = 2;
 export const DEFAULT_RATE = 1;
 export const DEFAULT_STEP = 0.05;
-export const DEFAULT_PRESET_RATES = [0.5, 0.75, 1, 1.25, 1.5];
+export const DEFAULT_PRESET_RATES = [0.75, 0.85, 1, 1.25, 1.5];
 export const DEFAULT_TAG_NAME = "audio-speed-player";
 export const ENGINE_NATIVE = "native";
 export const ENGINE_RUBBERBAND = "rubberband";
@@ -1045,7 +1045,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       let targetEnergy = 0.12 + Math.sin(time * 1.8) * 0.025;
       let targetBass = 0.1 + Math.cos(time * 1.3) * 0.02;
 
-      if (this._analyser && this._frequencyData && !this._parts.audio.paused) {
+      if (this._analyser && this._frequencyData && this.hasAttribute("playing")) {
         this._analyser.getByteFrequencyData(this._frequencyData);
         let total = 0;
         let bass = 0;
@@ -1096,6 +1096,34 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         this._setStatus("Audio loaded. Visualizer is running in idle mode.");
         return false;
       }
+    }
+
+    _ensureProfessionalAudioGraph() {
+      if (this._activeEngineName !== ENGINE_RUBBERBAND) return false;
+      if (this._analyser && this._frequencyData) return true;
+
+      const audioContext = this._ensureAudioContext();
+      if (!audioContext?.createAnalyser) return false;
+
+      try {
+        this._analyser = audioContext.createAnalyser();
+        this._analyser.fftSize = 128;
+        this._analyser.smoothingTimeConstant = 0.82;
+        this._frequencyData = new Uint8Array(this._analyser.frequencyBinCount);
+
+        if (this._audioEngine?.connectAnalyser?.(this._analyser)) {
+          return true;
+        }
+
+        this._analyser.disconnect?.();
+        this._analyser = null;
+        this._frequencyData = null;
+      } catch (error) {
+        this._analyser = null;
+        this._frequencyData = null;
+      }
+
+      return false;
     }
 
     _ensureAudioContext() {
@@ -1322,6 +1350,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       }
 
       try {
+        this._ensureProfessionalAudioGraph();
         await this._audioContext?.resume?.();
         await this._audioEngine?.play?.();
         this._transportPlaying = true;

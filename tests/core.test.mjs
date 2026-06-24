@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   buildPresetRates,
   clampRate,
+  DEFAULT_PRESET_RATES,
   defineAudioSpeedPlayer,
   ENGINE_NATIVE,
   ENGINE_RUBBERBAND,
@@ -57,6 +58,7 @@ test("formatRate displays compact playback labels", () => {
   assert.equal(formatRate(1), "1x");
   assert.equal(formatRate(1.5), "1.5x");
   assert.equal(formatRate(0.75), "0.75x");
+  assert.equal(formatRate(0.85), "0.85x");
   assert.equal(formatRate(1.25), "1.25x");
 });
 
@@ -430,8 +432,84 @@ test("RubberBandEngine initializes the worklet with WASM before posting buffers"
   assert.equal(postedMessages[1].message.type, "load-buffer");
 });
 
+test("RubberBandEngine routes worklet output through an analyser for visuals", async () => {
+  const connections = [];
+  const sourceBytes = new Uint8Array([1, 2, 3]).buffer;
+
+  function FakeAudioWorkletNode() {
+    return {
+      port: {
+        postMessage() {}
+      },
+      connect(target) {
+        connections.push(["worklet-connect", target]);
+      },
+      disconnect() {
+        connections.push(["worklet-disconnect"]);
+      }
+    };
+  }
+
+  const analyser = {
+    connect(target) {
+      connections.push(["analyser-connect", target]);
+    },
+    disconnect() {
+      connections.push(["analyser-disconnect"]);
+    }
+  };
+
+  const engine = createRubberBandEngine({
+    audioContext: {
+      sampleRate: 44100,
+      destination: "speakers",
+      audioWorklet: {
+        async addModule() {}
+      },
+      async decodeAudioData() {
+        return {
+          numberOfChannels: 1,
+          sampleRate: 44100,
+          getChannelData() {
+            return Float32Array.from([0, 0.5, 1]);
+          }
+        };
+      }
+    },
+    hooks: {
+      AudioWorkletNode: FakeAudioWorkletNode,
+      async fetch() {
+        return {
+          async arrayBuffer() {
+            return sourceBytes;
+          }
+        };
+      }
+    },
+    workletUrl: "./audio-speed-player-pro.worklet.js"
+  });
+
+  await engine.loadSource("./lesson.mp3");
+
+  assert.equal(engine.connectAnalyser(analyser), true);
+  assert.deepEqual(connections.filter(([action]) => action === "worklet-connect" || action === "analyser-connect"), [
+    ["worklet-connect", "speakers"],
+    ["worklet-connect", analyser],
+    ["analyser-connect", "speakers"]
+  ]);
+});
+
+test("default preset rates remove 0.5x and include 0.85x", () => {
+  assert.deepEqual(DEFAULT_PRESET_RATES, [0.75, 0.85, 1, 1.25, 1.5]);
+});
+
 test("buildPresetRates filters and sorts preset speeds", () => {
-  assert.deepEqual(buildPresetRates(0.75, 1.25, [1.5, 1, 0.5, 0.75, 1.25]), [0.75, 1, 1.25]);
+  assert.deepEqual(buildPresetRates(0.75, 1.25, [1.5, 1, 0.5, 0.75, 0.85, 1.25]), [
+    0.75,
+    0.85,
+    1,
+    1.25
+  ]);
 });
 
 test("defineAudioSpeedPlayer is safe to call without a browser DOM", () => {

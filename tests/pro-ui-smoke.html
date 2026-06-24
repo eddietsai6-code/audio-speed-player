@@ -84,6 +84,9 @@
         const transport = shadow.querySelector(".pro-transport");
         const button = shadow.querySelector(".transport-button");
         const audio = shadow.querySelector("audio");
+        const presetLabels = Array.from(shadow.querySelectorAll("[data-rate]")).map((preset) =>
+          preset.textContent.trim()
+        );
 
         result.textContent = JSON.stringify({
           ok:
@@ -92,12 +95,18 @@
             !transport.hidden &&
             button &&
             !button.disabled &&
-            player.hasAttribute("professional-active"),
+            player.hasAttribute("professional-active") &&
+            Boolean(shadow.querySelector(".metaballs-stage")) &&
+            Boolean(shadow.querySelector(".visualizer-canvas")) &&
+            JSON.stringify(presetLabels) === JSON.stringify(["0.75x", "0.85x", "1x", "1.25x", "1.5x"]),
           engineStatus: shadow.querySelector(".engine-status")?.textContent,
           hasTransport: Boolean(transport),
           transportHidden: transport?.hidden,
           buttonText: button?.textContent,
-          audioHidden: getComputedStyle(audio).display === "none"
+          audioHidden: getComputedStyle(audio).display === "none",
+          hasMetaballsStage: Boolean(shadow.querySelector(".metaballs-stage")),
+          hasVisualizerCanvas: Boolean(shadow.querySelector(".visualizer-canvas")),
+          presetLabels
         });
       } catch (error) {
         result.textContent = JSON.stringify({

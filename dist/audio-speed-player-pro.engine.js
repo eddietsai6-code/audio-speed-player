@@ -92,8 +92,29 @@ export function createRubberBandEngine(options = {}) {
   const hooks = options.hooks || globalThis;
   let unavailableReason = !audioContext ? "AudioContext unavailable" : "";
   let workletNode = null;
+  let analyserNode = null;
   let rate = 1;
   let preservePitch = true;
+
+  function connectWorkletOutput() {
+    if (!workletNode) return false;
+
+    try {
+      workletNode.disconnect?.();
+    } catch (error) {
+      // Some browsers throw when disconnecting a node with no current outputs.
+    }
+
+    if (analyserNode) {
+      analyserNode.disconnect?.();
+      workletNode.connect?.(analyserNode);
+      analyserNode.connect?.(audioContext.destination);
+      return true;
+    }
+
+    workletNode.connect?.(audioContext.destination);
+    return true;
+  }
 
   async function ensureWorkletNode() {
     if (!audioContext) {
@@ -119,7 +140,7 @@ export function createRubberBandEngine(options = {}) {
 
     await audioContext.audioWorklet.addModule(workletUrl);
     workletNode = new AudioWorkletNodeCtor(audioContext, RUBBERBAND_PROCESSOR_NAME);
-    workletNode.connect?.(audioContext.destination);
+    connectWorkletOutput();
     return workletNode;
   }
 
@@ -182,12 +203,16 @@ export function createRubberBandEngine(options = {}) {
       workletNode?.port?.postMessage(createRubberBandMessage("set-preserve-pitch", { preservePitch }));
       return preservePitch;
     },
-    connectAnalyser() {
-      return false;
+    connectAnalyser(analyser) {
+      if (!analyser || !audioContext) return false;
+      analyserNode = analyser;
+      return connectWorkletOutput();
     },
     destroy() {
       workletNode?.disconnect?.();
+      analyserNode?.disconnect?.();
       workletNode = null;
+      analyserNode = null;
     }
   };
 }

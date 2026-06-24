@@ -25,8 +25,13 @@
 
           slider.value = "1.25";
           slider.dispatchEvent(new Event("input", { bubbles: true }));
+          const presetLabels = Array.from(shadow.querySelectorAll("[data-rate]")).map((button) =>
+            button.textContent.trim()
+          );
 
           const designChecks = {
+            hasRequestedPresetLabels:
+              JSON.stringify(presetLabels) === JSON.stringify(["0.75x", "0.85x", "1x", "1.25x", "1.5x"]),
             hasMetaballsStage: Boolean(shadow.querySelector(".metaballs-stage")),
             hasVisualizerCanvas: Boolean(shadow.querySelector(".visualizer-canvas")),
             hasEnergyMeter: Boolean(shadow.querySelector(".energy-meter")),
@@ -54,6 +59,7 @@
             audioRate: audio.playbackRate,
             engineStatus: shadow.querySelector(".engine-status")?.textContent,
             professionalEngineStatus: professionalShadow.querySelector(".engine-status")?.textContent,
+            presetLabels,
             ...designChecks,
             hasCassetteShell: Boolean(shadow.querySelector(".cassette-shell")),
             reelCount: shadow.querySelectorAll(".reel").length,
