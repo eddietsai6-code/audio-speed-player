@@ -497,19 +497,36 @@ const componentStyles = `
 export class NativeAudioEngine {
   constructor(audio) {
     this.audio = audio;
+    this.name = ENGINE_NATIVE;
     this.rate = DEFAULT_RATE;
     this.preservePitch = true;
   }
 
   setRate(rate) {
     this.rate = normalizeRate(toFiniteNumber(rate, DEFAULT_RATE));
-    this.audio.defaultPlaybackRate = this.rate;
-    this.audio.playbackRate = this.rate;
+    this.applyRate();
     return this.rate;
   }
 
   setPreservePitch(value) {
     this.preservePitch = Boolean(value);
+    this.applyPitchMode();
+    return this.preservePitch;
+  }
+
+  connectAnalyser() {
+    return false;
+  }
+
+  destroy() {}
+
+  applyRate() {
+    this.audio.defaultPlaybackRate = this.rate;
+    this.audio.playbackRate = this.rate;
+    return this.rate;
+  }
+
+  applyPitchMode() {
     ["preservesPitch", "mozPreservesPitch", "webkitPreservesPitch"].forEach((property) => {
       if (property in this.audio) {
         this.audio[property] = this.preservePitch;

@@ -89,6 +89,38 @@ test("NativeAudioEngine applies rate and pitch mode to an audio element", () => 
   assert.equal(audio.webkitPreservesPitch, false);
 });
 
+test("NativeAudioEngine exposes the native engine interface", () => {
+  const audio = createFakeAudio();
+  const engine = new NativeAudioEngine(audio);
+
+  assert.equal(engine.name, ENGINE_NATIVE);
+  assert.equal(engine.connectAnalyser(), false);
+  assert.doesNotThrow(() => engine.destroy());
+});
+
+test("NativeAudioEngine applies stored rate through applyRate", () => {
+  const audio = createFakeAudio();
+  const engine = new NativeAudioEngine(audio);
+
+  engine.rate = 1.4;
+  engine.applyRate();
+
+  assert.equal(audio.defaultPlaybackRate, 1.4);
+  assert.equal(audio.playbackRate, 1.4);
+});
+
+test("NativeAudioEngine applies stored pitch mode through applyPitchMode", () => {
+  const audio = createFakeAudio();
+  const engine = new NativeAudioEngine(audio);
+
+  engine.preservePitch = false;
+  engine.applyPitchMode();
+
+  assert.equal(audio.preservesPitch, false);
+  assert.equal(audio.mozPreservesPitch, false);
+  assert.equal(audio.webkitPreservesPitch, false);
+});
+
 test("NativeAudioEngine loads sources and keeps playback controls delegated", async () => {
   const audio = createFakeAudio();
   const engine = new NativeAudioEngine(audio);
