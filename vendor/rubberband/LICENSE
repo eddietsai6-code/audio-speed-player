@@ -1,0 +1,16 @@
+Rubber Band Library license notice
+==================================
+
+Rubber Band Library is available for open-source use under the GNU General
+Public License, version 2 or later.
+
+Upstream license page:
+https://breakfastquay.com/rubberband/license.html
+
+Upstream license text location:
+https://github.com/breakfastquay/rubberband/blob/default/COPYING
+
+This project does not bundle Rubber Band source code or binaries in the native
+build. A future professional build that bundles or links Rubber Band code must
+carry GPL-compatible distribution terms unless a commercial Rubber Band license
+is used.
