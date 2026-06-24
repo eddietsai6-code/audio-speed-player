@@ -10,10 +10,12 @@
 
       try {
         await customElements.whenDefined("audio-speed-player");
-        const host = document.querySelector("audio-speed-player");
+        const host = document.getElementById("nativePlayer");
+        const professionalHost = document.getElementById("professionalPlayer");
         const shadow = host && host.shadowRoot;
+        const professionalShadow = professionalHost && professionalHost.shadowRoot;
 
-        if (!shadow) {
+        if (!shadow || !professionalShadow) {
           result.textContent = JSON.stringify({ ok: false, reason: "missing shadow root" });
         } else {
           const slider = shadow.querySelector(".rate-input");
@@ -30,6 +32,12 @@
             hasEnergyMeter: Boolean(shadow.querySelector(".energy-meter")),
             hasControlDeck: Boolean(shadow.querySelector(".control-deck")),
             hasMeterTrack: Boolean(shadow.querySelector(".meter-track")),
+            hasEngineStatus: Boolean(shadow.querySelector(".engine-status")),
+            hasSingleEngineStatus: shadow.querySelectorAll(".engine-status").length === 1,
+            professionalHasSingleEngineStatus: professionalShadow.querySelectorAll(".engine-status").length === 1,
+            professionalFallbackVisible:
+              professionalShadow.querySelector(".engine-status")?.textContent ===
+              "Professional engine unavailable, using native engine",
             noCassetteShell: !shadow.querySelector(".cassette-shell"),
             noReels: shadow.querySelectorAll(".reel").length === 0
           };
@@ -41,6 +49,8 @@
             before,
             after: readout.textContent,
             audioRate: audio.playbackRate,
+            engineStatus: shadow.querySelector(".engine-status")?.textContent,
+            professionalEngineStatus: professionalShadow.querySelector(".engine-status")?.textContent,
             ...designChecks,
             hasCassetteShell: Boolean(shadow.querySelector(".cassette-shell")),
             reelCount: shadow.querySelectorAll(".reel").length,
@@ -56,7 +66,8 @@
     </script>
   </head>
   <body>
-    <audio-speed-player label="Smoke pad"></audio-speed-player>
+    <audio-speed-player id="nativePlayer" label="Smoke pad"></audio-speed-player>
+    <audio-speed-player id="professionalPlayer" label="Pro smoke pad" engine="rubberband"></audio-speed-player>
     <pre id="result">pending</pre>
   </body>
 </html>
