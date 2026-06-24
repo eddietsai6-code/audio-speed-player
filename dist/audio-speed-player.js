@@ -494,6 +494,45 @@ const componentStyles = `
   }
 `;
 
+export class NativeAudioEngine {
+  constructor(audio) {
+    this.audio = audio;
+    this.rate = DEFAULT_RATE;
+    this.preservePitch = true;
+  }
+
+  setRate(rate) {
+    this.rate = normalizeRate(toFiniteNumber(rate, DEFAULT_RATE));
+    this.audio.defaultPlaybackRate = this.rate;
+    this.audio.playbackRate = this.rate;
+    return this.rate;
+  }
+
+  setPreservePitch(value) {
+    this.preservePitch = Boolean(value);
+    ["preservesPitch", "mozPreservesPitch", "webkitPreservesPitch"].forEach((property) => {
+      if (property in this.audio) {
+        this.audio[property] = this.preservePitch;
+      }
+    });
+    return this.preservePitch;
+  }
+
+  loadSource(src) {
+    this.audio.src = src;
+    this.audio.load();
+    return src;
+  }
+
+  play() {
+    return this.audio.play();
+  }
+
+  pause() {
+    return this.audio.pause();
+  }
+}
+
 export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
   const registry = globalThis.customElements;
   const HTMLElementCtor = globalThis.HTMLElement;

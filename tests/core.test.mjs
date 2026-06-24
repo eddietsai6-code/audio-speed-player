@@ -8,10 +8,35 @@ import {
   ENGINE_NATIVE,
   ENGINE_RUBBERBAND,
   formatRate,
+  NativeAudioEngine,
   normalizeEngineName,
   parseBooleanAttribute,
   parseRateAttribute
 } from "../dist/audio-speed-player.js";
+
+function createFakeAudio() {
+  return {
+    defaultPlaybackRate: 1,
+    playbackRate: 1,
+    preservesPitch: true,
+    mozPreservesPitch: true,
+    webkitPreservesPitch: true,
+    src: "",
+    loadCalls: 0,
+    playCalls: 0,
+    pauseCalls: 0,
+    load() {
+      this.loadCalls += 1;
+    },
+    play() {
+      this.playCalls += 1;
+      return Promise.resolve();
+    },
+    pause() {
+      this.pauseCalls += 1;
+    }
+  };
+}
 
 test("clampRate keeps values inside the configured speed range", () => {
   assert.equal(clampRate(0.1, 0.25, 2), 0.25);
@@ -48,6 +73,34 @@ test("normalizeEngineName accepts native and rubberband engines only", () => {
   assert.equal(normalizeEngineName("rubberband"), ENGINE_RUBBERBAND);
   assert.equal(normalizeEngineName("RUBBERBAND"), ENGINE_RUBBERBAND);
   assert.equal(normalizeEngineName("unknown"), ENGINE_NATIVE);
+});
+
+test("NativeAudioEngine applies rate and pitch mode to an audio element", () => {
+  const audio = createFakeAudio();
+  const engine = new NativeAudioEngine(audio);
+
+  engine.setRate(0.75);
+  engine.setPreservePitch(false);
+
+  assert.equal(audio.defaultPlaybackRate, 0.75);
+  assert.equal(audio.playbackRate, 0.75);
+  assert.equal(audio.preservesPitch, false);
+  assert.equal(audio.mozPreservesPitch, false);
+  assert.equal(audio.webkitPreservesPitch, false);
+});
+
+test("NativeAudioEngine loads sources and keeps playback controls delegated", async () => {
+  const audio = createFakeAudio();
+  const engine = new NativeAudioEngine(audio);
+
+  assert.equal(engine.loadSource("./lesson.mp3"), "./lesson.mp3");
+  await engine.play();
+  engine.pause();
+
+  assert.equal(audio.src, "./lesson.mp3");
+  assert.equal(audio.loadCalls, 1);
+  assert.equal(audio.playCalls, 1);
+  assert.equal(audio.pauseCalls, 1);
 });
 
 test("buildPresetRates filters and sorts preset speeds", () => {
