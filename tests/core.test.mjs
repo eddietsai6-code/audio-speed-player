@@ -135,6 +135,29 @@ test("NativeAudioEngine loads sources and keeps playback controls delegated", as
   assert.equal(audio.pauseCalls, 1);
 });
 
+test("NativeAudioEngine reapplies stored rate and pitch state after loading a source", () => {
+  const audio = createFakeAudio();
+  const engine = new NativeAudioEngine(audio);
+
+  engine.setRate(0.75);
+  engine.setPreservePitch(false);
+  audio.defaultPlaybackRate = 1;
+  audio.playbackRate = 1;
+  audio.preservesPitch = true;
+  audio.mozPreservesPitch = true;
+  audio.webkitPreservesPitch = true;
+
+  assert.equal(engine.loadSource("./next.mp3"), "./next.mp3");
+
+  assert.equal(audio.src, "./next.mp3");
+  assert.equal(audio.loadCalls, 1);
+  assert.equal(audio.defaultPlaybackRate, 0.75);
+  assert.equal(audio.playbackRate, 0.75);
+  assert.equal(audio.preservesPitch, false);
+  assert.equal(audio.mozPreservesPitch, false);
+  assert.equal(audio.webkitPreservesPitch, false);
+});
+
 test("buildPresetRates filters and sorts preset speeds", () => {
   assert.deepEqual(buildPresetRates(0.75, 1.25, [1.5, 1, 0.5, 0.75, 1.25]), [0.75, 1, 1.25]);
 });

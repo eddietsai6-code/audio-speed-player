@@ -523,6 +523,7 @@ export class NativeAudioEngine {
   applyRate() {
     this.audio.defaultPlaybackRate = this.rate;
     this.audio.playbackRate = this.rate;
+    this.applyPitchMode();
     return this.rate;
   }
 
@@ -537,16 +538,17 @@ export class NativeAudioEngine {
 
   loadSource(src) {
     this.audio.src = src;
-    this.audio.load();
+    this.audio?.load?.();
+    this.applyRate();
     return src;
   }
 
   play() {
-    return this.audio.play();
+    return this.audio?.play?.();
   }
 
   pause() {
-    return this.audio.pause();
+    return this.audio?.pause?.();
   }
 }
 
