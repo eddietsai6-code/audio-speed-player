@@ -53,6 +53,18 @@ export function normalizeEngineName(value, fallback = ENGINE_NATIVE) {
   return fallback;
 }
 
+export function formatEngineStatus(activeEngine, requestedEngine = activeEngine) {
+  if (requestedEngine === ENGINE_RUBBERBAND && activeEngine === ENGINE_NATIVE) {
+    return "Professional engine unavailable, using native engine";
+  }
+
+  if (activeEngine === ENGINE_RUBBERBAND) {
+    return "Professional engine";
+  }
+
+  return "Native engine";
+}
+
 export function buildPresetRates(min, max, presets = DEFAULT_PRESET_RATES) {
   const safeMin = toFiniteNumber(min, DEFAULT_MIN_RATE);
   const safeMax = toFiniteNumber(max, DEFAULT_MAX_RATE);
@@ -435,7 +447,8 @@ const componentStyles = `
     accent-color: var(--asp-accent);
   }
 
-  .status {
+  .status,
+  .engine-status {
     margin: 10px 0 0;
     min-height: 18px;
     color: var(--asp-muted);
@@ -560,7 +573,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
   if (registry.get(tagName)) return false;
 
   class AudioSpeedPlayerElement extends HTMLElementCtor {
-    static observedAttributes = ["src", "label", "rate", "min-rate", "max-rate", "step", "preserve-pitch"];
+    static observedAttributes = ["src", "label", "engine", "rate", "min-rate", "max-rate", "step", "preserve-pitch"];
 
     constructor() {
       super();
@@ -571,6 +584,9 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this._maxRate = DEFAULT_MAX_RATE;
       this._step = DEFAULT_STEP;
       this._preservePitch = true;
+      this._requestedEngineName = ENGINE_NATIVE;
+      this._activeEngineName = ENGINE_NATIVE;
+      this._audioEngine = null;
       this._reflectingRate = false;
       this._reflectingPitch = false;
       this._parts = {};
@@ -600,6 +616,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this._syncRange();
       this._syncPresets();
       this._syncPitchUi();
+      this._syncEngineFromAttributes();
 
       const src = this.getAttribute("src");
       if (src) {
@@ -614,6 +631,8 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     disconnectedCallback() {
       this._stopVisualizer();
       this._disconnectAudioGraph();
+      this._audioEngine?.destroy?.();
+      this._audioEngine = null;
       this._revokeObjectUrl();
     }
 
@@ -629,6 +648,14 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
 
       if (name === "label") {
         this._syncLabel();
+        return;
+      }
+
+      if (name === "engine") {
+        this._syncEngineFromAttributes();
+        const src = this.getAttribute("src");
+        if (src) this.loadSrc(src);
+        this.setRate(this._rate);
         return;
       }
 
@@ -734,6 +761,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
               </label>
 
               <audio class="audio" part="audio" controls preload="metadata"></audio>
+              <p class="engine-status" aria-live="polite"></p>
 
               <div class="speed-panel">
                 <div class="control-row">
@@ -765,6 +793,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         audio: this.shadowRoot.querySelector(".audio"),
         dropZone: this.shadowRoot.querySelector(".drop-zone"),
         energyValue: this.shadowRoot.querySelector(".energy-value"),
+        engineStatus: this.shadowRoot.querySelector(".engine-status"),
         fileInput: this.shadowRoot.querySelector(".file-input"),
         preserveInput: this.shadowRoot.querySelector(".preserve-input"),
         presetRow: this.shadowRoot.querySelector(".preset-row"),
@@ -1091,6 +1120,34 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this._applyPitchMode();
     }
 
+    _syncEngineFromAttributes() {
+      const requestedEngine = normalizeEngineName(this.getAttribute("engine"));
+      if (!this._audioEngine || requestedEngine !== this._requestedEngineName) {
+        this._selectEngine(requestedEngine);
+      }
+    }
+
+    _selectEngine(requestedEngine) {
+      this._requestedEngineName = requestedEngine;
+      this._audioEngine?.destroy?.();
+
+      if (requestedEngine === ENGINE_RUBBERBAND) {
+        this._activeEngineName = ENGINE_NATIVE;
+      } else {
+        this._activeEngineName = ENGINE_NATIVE;
+      }
+
+      this._audioEngine = new NativeAudioEngine(this._parts.audio);
+      this._audioEngine.setRate(this._rate);
+      this._audioEngine.setPreservePitch(this._preservePitch);
+      this._syncEngineStatus();
+    }
+
+    _syncEngineStatus() {
+      if (!this._parts.engineStatus) return;
+      this._parts.engineStatus.textContent = formatEngineStatus(this._activeEngineName, this._requestedEngineName);
+    }
+
     _setPreservePitch(value, options = {}) {
       this._preservePitch = Boolean(value);
       this._syncPitchUi();
@@ -1103,29 +1160,15 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     }
 
     _applyRate() {
-      const { audio } = this._parts;
-      if (!audio) return;
-      audio.defaultPlaybackRate = this._rate;
-      audio.playbackRate = this._rate;
-      this._applyPitchMode();
+      this._audioEngine?.setRate(this._rate);
     }
 
     _applyPitchMode() {
-      const { audio } = this._parts;
-      if (!audio) return;
-
-      ["preservesPitch", "mozPreservesPitch", "webkitPreservesPitch"].forEach((property) => {
-        if (property in audio) {
-          audio[property] = this._preservePitch;
-        }
-      });
+      this._audioEngine?.setPreservePitch(this._preservePitch);
     }
 
     _setAudioSource(src) {
-      const { audio } = this._parts;
-      audio.src = src;
-      audio.load();
-      this._applyRate();
+      this._audioEngine?.loadSource(src);
     }
 
     _setStatus(message) {

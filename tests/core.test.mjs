@@ -7,6 +7,7 @@ import {
   defineAudioSpeedPlayer,
   ENGINE_NATIVE,
   ENGINE_RUBBERBAND,
+  formatEngineStatus,
   formatRate,
   NativeAudioEngine,
   normalizeEngineName,
@@ -156,6 +157,15 @@ test("NativeAudioEngine reapplies stored rate and pitch state after loading a so
   assert.equal(audio.preservesPitch, false);
   assert.equal(audio.mozPreservesPitch, false);
   assert.equal(audio.webkitPreservesPitch, false);
+});
+
+test("formatEngineStatus describes active and fallback engines", () => {
+  assert.equal(formatEngineStatus(ENGINE_NATIVE, ENGINE_NATIVE), "Native engine");
+  assert.equal(formatEngineStatus(ENGINE_RUBBERBAND, ENGINE_RUBBERBAND), "Professional engine");
+  assert.equal(
+    formatEngineStatus(ENGINE_NATIVE, ENGINE_RUBBERBAND),
+    "Professional engine unavailable, using native engine"
+  );
 });
 
 test("buildPresetRates filters and sorts preset speeds", () => {
