@@ -41,7 +41,7 @@ emcc \
   -s ALLOW_MEMORY_GROWTH=1 \
   -s MALLOC=emmalloc \
   -s NO_EXIT_RUNTIME=1 \
-  -s EXPORTED_RUNTIME_METHODS='["cwrap","getValue","setValue","UTF8ToString"]' \
+  -s EXPORTED_RUNTIME_METHODS='["cwrap","getValue","setValue","UTF8ToString","HEAPF32","HEAPU32"]' \
   -s EXPORTED_FUNCTIONS='["_malloc","_free","_asp_rubberband_version","_asp_rubberband_create","_asp_rubberband_destroy","_asp_rubberband_reset","_asp_rubberband_engine_version","_asp_rubberband_set_playback_rate","_asp_rubberband_samples_required","_asp_rubberband_available","_asp_rubberband_process","_asp_rubberband_retrieve"]' \
   -o "${OUTPUT}"
 

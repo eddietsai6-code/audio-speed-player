@@ -18,6 +18,8 @@ test("Rubber Band WASM build script uses the free official source and Emscripten
   assert.match(script, /breakfastquay\.com\/files\/releases\/rubberband-\$\{RUBBERBAND_VERSION\}\.tar\.bz2/);
   assert.match(script, /single\/RubberBandSingle\.cpp/);
   assert.match(script, /\bemcc\b/);
+  assert.match(script, /HEAPF32/);
+  assert.match(script, /HEAPU32/);
   assert.match(script, /audio-speed-player-rubberband\.mjs/);
   assert.match(script, /audio-speed-player-rubberband\.wasm/);
 });
