@@ -761,7 +761,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
               </label>
 
               <audio class="audio" part="audio" controls preload="metadata"></audio>
-              <p class="engine-status" aria-live="polite"></p>
+              <p class="engine-status" part="engine-status" aria-live="polite"></p>
 
               <div class="speed-panel">
                 <div class="control-row">

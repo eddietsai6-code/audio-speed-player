@@ -33,6 +33,8 @@
             hasControlDeck: Boolean(shadow.querySelector(".control-deck")),
             hasMeterTrack: Boolean(shadow.querySelector(".meter-track")),
             hasEngineStatus: Boolean(shadow.querySelector(".engine-status")),
+            hasEngineStatusPart:
+              shadow.querySelector(".engine-status")?.getAttribute("part") === "engine-status",
             hasSingleEngineStatus: shadow.querySelectorAll(".engine-status").length === 1,
             professionalHasSingleEngineStatus: professionalShadow.querySelectorAll(".engine-status").length === 1,
             nativeStatusVisible: shadow.querySelector(".engine-status")?.textContent.trim() === "Native engine",
