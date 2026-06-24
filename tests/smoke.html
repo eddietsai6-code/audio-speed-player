@@ -35,8 +35,9 @@
             hasEngineStatus: Boolean(shadow.querySelector(".engine-status")),
             hasSingleEngineStatus: shadow.querySelectorAll(".engine-status").length === 1,
             professionalHasSingleEngineStatus: professionalShadow.querySelectorAll(".engine-status").length === 1,
+            nativeStatusVisible: shadow.querySelector(".engine-status")?.textContent.trim() === "Native engine",
             professionalFallbackVisible:
-              professionalShadow.querySelector(".engine-status")?.textContent ===
+              professionalShadow.querySelector(".engine-status")?.textContent.trim() ===
               "Professional engine unavailable, using native engine",
             noCassetteShell: !shadow.querySelector(".cassette-shell"),
             noReels: shadow.querySelectorAll(".reel").length === 0
