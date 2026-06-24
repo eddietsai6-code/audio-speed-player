@@ -6,10 +6,20 @@ It has no framework dependency, no paid API, and no server requirement. It uses 
 
 ## Quick Start
 
+Native browser engine:
+
 ```html
 <script type="module" src="./dist/audio-speed-player.js"></script>
 
 <audio-speed-player></audio-speed-player>
+```
+
+Professional Rubber Band engine:
+
+```html
+<script type="module" src="./dist/audio-speed-player-pro.js"></script>
+
+<audio-speed-player engine="rubberband"></audio-speed-player>
 ```
 
 From GitHub Pages:
@@ -17,10 +27,10 @@ From GitHub Pages:
 ```html
 <script
   type="module"
-  src="https://eddietsai6-code.github.io/audio-speed-player/dist/audio-speed-player.js"
+  src="https://eddietsai6-code.github.io/audio-speed-player/dist/audio-speed-player-pro.js"
 ></script>
 
-<audio-speed-player></audio-speed-player>
+<audio-speed-player engine="rubberband"></audio-speed-player>
 ```
 
 Demo page:
@@ -32,9 +42,9 @@ https://eddietsai6-code.github.io/audio-speed-player/
 With a default audio source:
 
 ```html
-<script type="module" src="./dist/audio-speed-player.js"></script>
+<script type="module" src="./dist/audio-speed-player-pro.js"></script>
 
-<audio-speed-player src="./song.mp3" label="Lesson track"></audio-speed-player>
+<audio-speed-player src="./song.mp3" label="Lesson track" engine="rubberband"></audio-speed-player>
 ```
 
 ## Engine Modes
@@ -45,15 +55,17 @@ The default build uses the native browser engine:
 <audio-speed-player src="./song.mp3" engine="native"></audio-speed-player>
 ```
 
-You can request professional mode with:
+Load the professional entry and request Rubber Band mode with:
 
 ```html
+<script type="module" src="./dist/audio-speed-player-pro.js"></script>
+
 <audio-speed-player src="./song.mp3" engine="rubberband"></audio-speed-player>
 ```
 
-The current public build falls back to native playback when the professional engine is
-not available. A future professional build will bundle a Rubber Band WebAssembly
-engine for higher quality time-stretching.
+The professional browser entry registers the Rubber Band WebAssembly engine and
+adds a dedicated play/pause transport to the component UI. If the browser cannot
+load AudioWorklet or WebAssembly, the component falls back to native playback.
 
 The native build remains MIT-compatible. A build that bundles Rubber Band must be
 GPL-compatible unless a commercial Rubber Band license is used.
@@ -68,6 +80,9 @@ implementations.
 The generated files are:
 
 ```text
+dist/audio-speed-player-pro.js
+dist/audio-speed-player-pro.engine.js
+dist/audio-speed-player-pro.worklet.js
 dist/audio-speed-player-rubberband.mjs
 dist/audio-speed-player-rubberband.wasm
 ```

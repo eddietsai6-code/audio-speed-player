@@ -12,7 +12,8 @@ import {
   NativeAudioEngine,
   normalizeEngineName,
   parseBooleanAttribute,
-  parseRateAttribute
+  parseRateAttribute,
+  registerAudioSpeedPlayerEngineFactory
 } from "../dist/audio-speed-player.js";
 import {
   createLoadBufferMessage,
@@ -173,6 +174,15 @@ test("formatEngineStatus describes active and fallback engines", () => {
     formatEngineStatus(ENGINE_NATIVE, ENGINE_RUBBERBAND),
     "Professional engine unavailable, using native engine"
   );
+});
+
+test("registerAudioSpeedPlayerEngineFactory accepts professional engine factories", () => {
+  assert.equal(
+    registerAudioSpeedPlayerEngineFactory(ENGINE_RUBBERBAND, () => ({ name: ENGINE_RUBBERBAND })),
+    true
+  );
+  assert.equal(registerAudioSpeedPlayerEngineFactory("", () => ({})), false);
+  assert.equal(registerAudioSpeedPlayerEngineFactory(ENGINE_RUBBERBAND, null), false);
 });
 
 test("createRubberBandEngine exposes the professional engine boundary", () => {

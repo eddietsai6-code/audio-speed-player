@@ -10,6 +10,7 @@ export const ENGINE_RUBBERBAND = "rubberband";
 const SUPPORTED_ENGINES = new Set([ENGINE_NATIVE, ENGINE_RUBBERBAND]);
 const BOOLEAN_FALSE_VALUES = new Set(["false", "0", "off", "no"]);
 const BOOLEAN_TRUE_VALUES = new Set(["", "true", "1", "on", "yes"]);
+const engineFactories = new Map();
 
 function toFiniteNumber(value, fallback) {
   const number = Number(value);
@@ -73,6 +74,13 @@ export function buildPresetRates(min, max, presets = DEFAULT_PRESET_RATES) {
 
   return [...new Set(presets.map((rate) => normalizeRate(rate)).filter((rate) => rate >= low && rate <= high))]
     .sort((a, b) => a - b);
+}
+
+export function registerAudioSpeedPlayerEngineFactory(engineName, factory) {
+  const normalized = normalizeEngineName(engineName, "");
+  if (!normalized || typeof factory !== "function") return false;
+  engineFactories.set(normalized, factory);
+  return true;
 }
 
 const componentStyles = `
@@ -354,6 +362,38 @@ const componentStyles = `
     filter: invert(0.92) hue-rotate(156deg) saturate(0.8);
   }
 
+  :host([professional-active]) audio {
+    display: none;
+  }
+
+  .pro-transport {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0 0;
+    border: 1px solid rgba(234, 255, 247, 0.14);
+    border-radius: 8px;
+    background: rgba(5, 14, 18, 0.5);
+    padding: 9px;
+  }
+
+  .pro-transport[hidden] {
+    display: none;
+  }
+
+  .transport-button {
+    min-width: 72px;
+  }
+
+  .transport-state {
+    overflow: hidden;
+    color: var(--asp-muted);
+    font-size: 12px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .control-row {
     display: grid;
     grid-template-columns: minmax(58px, auto) 1fr;
@@ -587,6 +627,10 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this._requestedEngineName = ENGINE_NATIVE;
       this._activeEngineName = ENGINE_NATIVE;
       this._audioEngine = null;
+      this._transportPlaying = false;
+      this._sourceLoadToken = 0;
+      this._hasAudioSource = false;
+      this._sourceLoading = false;
       this._reflectingRate = false;
       this._reflectingPitch = false;
       this._parts = {};
@@ -761,6 +805,10 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
               </label>
 
               <audio class="audio" part="audio" controls preload="metadata"></audio>
+              <div class="pro-transport" part="professional-transport" hidden>
+                <button class="transport-button" part="transport-button" type="button" disabled>Play</button>
+                <span class="transport-state">Professional engine loading</span>
+              </div>
               <p class="engine-status" part="engine-status" aria-live="polite"></p>
 
               <div class="speed-panel">
@@ -802,13 +850,17 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         resetButton: this.shadowRoot.querySelector(".reset-button"),
         status: this.shadowRoot.querySelector(".status"),
         title: this.shadowRoot.querySelector(".title"),
+        proTransport: this.shadowRoot.querySelector(".pro-transport"),
+        transportButton: this.shadowRoot.querySelector(".transport-button"),
+        transportState: this.shadowRoot.querySelector(".transport-state"),
         visualizerCanvas: this.shadowRoot.querySelector(".visualizer-canvas"),
         visualizerStage: this.shadowRoot.querySelector(".metaballs-stage")
       };
     }
 
     _bindEvents() {
-      const { audio, dropZone, fileInput, preserveInput, presetRow, rateInput, resetButton } = this._parts;
+      const { audio, dropZone, fileInput, preserveInput, presetRow, rateInput, resetButton, transportButton } =
+        this._parts;
 
       fileInput.addEventListener("change", () => {
         this.loadFile(fileInput.files?.[0]);
@@ -847,6 +899,10 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
 
       resetButton.addEventListener("click", () => {
         this.setRate(DEFAULT_RATE, { reflect: true });
+      });
+
+      transportButton.addEventListener("click", () => {
+        this._toggleProfessionalTransport();
       });
 
       preserveInput.addEventListener("change", () => {
@@ -1042,6 +1098,14 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       }
     }
 
+    _ensureAudioContext() {
+      if (this._audioContext) return this._audioContext;
+      const AudioContextCtor = globalThis.AudioContext || globalThis.webkitAudioContext;
+      if (!AudioContextCtor) return null;
+      this._audioContext = new AudioContextCtor();
+      return this._audioContext;
+    }
+
     _disconnectAudioGraph() {
       try {
         this._audioSource?.disconnect();
@@ -1130,22 +1194,55 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     _selectEngine(requestedEngine) {
       this._requestedEngineName = requestedEngine;
       this._audioEngine?.destroy?.();
+      this._transportPlaying = false;
 
-      if (requestedEngine === ENGINE_RUBBERBAND) {
-        this._activeEngineName = ENGINE_NATIVE;
+      const factory = engineFactories.get(requestedEngine);
+      if (factory) {
+        try {
+          this._audioEngine = factory({
+            audio: this._parts.audio,
+            audioContext: this._ensureAudioContext(),
+            host: this
+          });
+          this._activeEngineName = this._audioEngine?.name || requestedEngine;
+        } catch (error) {
+          this._activeEngineName = ENGINE_NATIVE;
+          this._audioEngine = new NativeAudioEngine(this._parts.audio);
+          this._setStatus("Professional engine unavailable, using native playback.");
+        }
       } else {
         this._activeEngineName = ENGINE_NATIVE;
+        this._audioEngine = new NativeAudioEngine(this._parts.audio);
       }
 
-      this._audioEngine = new NativeAudioEngine(this._parts.audio);
       this._audioEngine.setRate(this._rate);
       this._audioEngine.setPreservePitch(this._preservePitch);
       this._syncEngineStatus();
+      this._syncTransportUi();
     }
 
     _syncEngineStatus() {
       if (!this._parts.engineStatus) return;
       this._parts.engineStatus.textContent = formatEngineStatus(this._activeEngineName, this._requestedEngineName);
+      this.toggleAttribute("professional-active", this._activeEngineName === ENGINE_RUBBERBAND);
+      this._syncTransportUi();
+    }
+
+    _syncTransportUi() {
+      const { proTransport, transportButton, transportState } = this._parts;
+      if (!proTransport || !transportButton || !transportState) return;
+
+      const professionalActive = this._activeEngineName === ENGINE_RUBBERBAND;
+      proTransport.hidden = !professionalActive;
+      if (!professionalActive) return;
+
+      transportButton.disabled = !this._hasAudioSource || this._sourceLoading;
+      transportButton.textContent = this._transportPlaying ? "Pause" : "Play";
+      transportState.textContent = this._sourceLoading
+        ? "Loading professional Rubber Band engine"
+        : this._hasAudioSource
+          ? "Professional Rubber Band engine ready"
+          : "Choose audio to enable professional playback";
     }
 
     _setPreservePitch(value, options = {}) {
@@ -1168,7 +1265,71 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     }
 
     _setAudioSource(src) {
-      this._audioEngine?.loadSource(src);
+      const token = (this._sourceLoadToken += 1);
+      this._hasAudioSource = Boolean(src);
+      this._transportPlaying = false;
+      this._sourceLoading = false;
+      this.toggleAttribute("playing", false);
+      this._syncTransportUi();
+
+      const result = this._audioEngine?.loadSource(src);
+      if (!result?.then) return result;
+
+      if (this._activeEngineName === ENGINE_RUBBERBAND) {
+        this._sourceLoading = true;
+        this._syncTransportUi();
+        this._setStatus("Loading professional engine.");
+      }
+
+      return result
+        .then((value) => {
+          if (token !== this._sourceLoadToken) return value;
+          this._sourceLoading = false;
+          this._activeEngineName = this._audioEngine?.name || this._activeEngineName;
+          this._hasAudioSource = Boolean(src);
+          this._setStatus(this._activeEngineName === ENGINE_RUBBERBAND ? "Professional engine loaded." : "Audio source loaded.");
+          this._syncEngineStatus();
+          return value;
+        })
+        .catch((error) => {
+          if (token !== this._sourceLoadToken) return "";
+          this._sourceLoading = false;
+          this._fallbackToNative(src, error);
+          return "";
+        });
+    }
+
+    _fallbackToNative(src, error) {
+      this._audioEngine?.destroy?.();
+      this._activeEngineName = ENGINE_NATIVE;
+      this._audioEngine = new NativeAudioEngine(this._parts.audio);
+      this._audioEngine.setRate(this._rate);
+      this._audioEngine.setPreservePitch(this._preservePitch);
+      if (src) this._audioEngine.loadSource(src);
+      this._setStatus(error?.message || "Professional engine unavailable, using native playback.");
+      this._syncEngineStatus();
+    }
+
+    async _toggleProfessionalTransport() {
+      if (this._activeEngineName !== ENGINE_RUBBERBAND || !this._hasAudioSource) return;
+
+      if (this._transportPlaying) {
+        this._audioEngine?.pause?.();
+        this._transportPlaying = false;
+        this.toggleAttribute("playing", false);
+        this._syncTransportUi();
+        return;
+      }
+
+      try {
+        await this._audioContext?.resume?.();
+        await this._audioEngine?.play?.();
+        this._transportPlaying = true;
+        this.toggleAttribute("playing", true);
+        this._syncTransportUi();
+      } catch (error) {
+        this._setStatus(error?.message || "Unable to start professional playback.");
+      }
     }
 
     _setStatus(message) {
@@ -1186,4 +1347,8 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
   return true;
 }
 
-defineAudioSpeedPlayer();
+if (globalThis.queueMicrotask) {
+  globalThis.queueMicrotask(() => defineAudioSpeedPlayer());
+} else {
+  globalThis.setTimeout?.(() => defineAudioSpeedPlayer(), 0);
+}

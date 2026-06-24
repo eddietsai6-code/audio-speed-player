@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Audio Speed Player Pro UI Smoke</title>
+    <script type="module">
+      import "../dist/audio-speed-player-pro.js";
+
+      const result = document.getElementById("result");
+
+      function createSineWaveFile() {
+        const sampleRate = 44100;
+        const seconds = 0.25;
+        const frames = Math.floor(sampleRate * seconds);
+        const bytesPerSample = 2;
+        const dataSize = frames * bytesPerSample;
+        const buffer = new ArrayBuffer(44 + dataSize);
+        const view = new DataView(buffer);
+        let offset = 0;
+
+        function writeString(value) {
+          for (let index = 0; index < value.length; index += 1) {
+            view.setUint8(offset, value.charCodeAt(index));
+            offset += 1;
+          }
+        }
+
+        writeString("RIFF");
+        view.setUint32(offset, 36 + dataSize, true);
+        offset += 4;
+        writeString("WAVE");
+        writeString("fmt ");
+        view.setUint32(offset, 16, true);
+        offset += 4;
+        view.setUint16(offset, 1, true);
+        offset += 2;
+        view.setUint16(offset, 1, true);
+        offset += 2;
+        view.setUint32(offset, sampleRate, true);
+        offset += 4;
+        view.setUint32(offset, sampleRate * bytesPerSample, true);
+        offset += 4;
+        view.setUint16(offset, bytesPerSample, true);
+        offset += 2;
+        view.setUint16(offset, 16, true);
+        offset += 2;
+        writeString("data");
+        view.setUint32(offset, dataSize, true);
+        offset += 4;
+
+        for (let frame = 0; frame < frames; frame += 1) {
+          const sample = Math.sin((frame / sampleRate) * Math.PI * 2 * 440) * 0.4;
+          view.setInt16(offset, Math.max(-1, Math.min(1, sample)) * 0x7fff, true);
+          offset += 2;
+        }
+
+        return new File([buffer], "sine.wav", { type: "audio/wav" });
+      }
+
+      try {
+        await customElements.whenDefined("audio-speed-player");
+        const player = document.querySelector("audio-speed-player");
+        player.loadFile(createSineWaveFile());
+
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error("Timed out waiting for professional engine")), 5000);
+
+          function poll() {
+            const shadow = player.shadowRoot;
+            const engineStatus = shadow?.querySelector(".engine-status")?.textContent.trim();
+            const button = shadow?.querySelector(".transport-button");
+            if (engineStatus === "Professional engine" && button && !button.disabled) {
+              clearTimeout(timeout);
+              resolve();
+              return;
+            }
+            requestAnimationFrame(poll);
+          }
+
+          poll();
+        });
+
+        const shadow = player.shadowRoot;
+        const transport = shadow.querySelector(".pro-transport");
+        const button = shadow.querySelector(".transport-button");
+        const audio = shadow.querySelector("audio");
+
+        result.textContent = JSON.stringify({
+          ok:
+            shadow.querySelector(".engine-status")?.textContent.trim() === "Professional engine" &&
+            transport &&
+            !transport.hidden &&
+            button &&
+            !button.disabled &&
+            player.hasAttribute("professional-active"),
+          engineStatus: shadow.querySelector(".engine-status")?.textContent,
+          hasTransport: Boolean(transport),
+          transportHidden: transport?.hidden,
+          buttonText: button?.textContent,
+          audioHidden: getComputedStyle(audio).display === "none"
+        });
+      } catch (error) {
+        result.textContent = JSON.stringify({
+          ok: false,
+          reason: error.message
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <audio-speed-player engine="rubberband" label="Pro UI smoke"></audio-speed-player>
+    <pre id="result">pending</pre>
+  </body>
+</html>

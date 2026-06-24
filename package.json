@@ -5,7 +5,8 @@
   "type": "module",
   "module": "./dist/audio-speed-player.js",
   "exports": {
-    ".": "./dist/audio-speed-player.js"
+    ".": "./dist/audio-speed-player.js",
+    "./pro": "./dist/audio-speed-player-pro.js"
   },
   "files": [
     "dist",

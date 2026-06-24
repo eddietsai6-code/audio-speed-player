@@ -48,3 +48,11 @@ test("GitHub Actions can build and publish the free WASM artifact", async () => 
   assert.match(workflow, /actions\/upload-artifact/);
   assert.match(workflow, /rubberband-wasm/);
 });
+
+test("package exposes the professional browser entry", async () => {
+  const packageJson = JSON.parse(await readProjectFile("package.json"));
+
+  assert.equal(packageJson.exports["./pro"], "./dist/audio-speed-player-pro.js");
+  assert.equal(existsSync(new URL("dist/audio-speed-player-pro.js", ROOT)), true);
+  assert.equal(existsSync(new URL("dist/audio-speed-player-pro.engine.js", ROOT)), true);
+});
