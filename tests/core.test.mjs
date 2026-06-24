@@ -14,7 +14,7 @@ import {
   parseBooleanAttribute,
   parseRateAttribute
 } from "../dist/audio-speed-player.js";
-import { createRubberBandEngine } from "../src/pro/rubberband-engine.js";
+import { createRubberBandEngine, loadRubberBandWasm } from "../src/pro/rubberband-engine.js";
 
 function createFakeAudio() {
   return {
@@ -195,6 +195,51 @@ test("createRubberBandEngine reports when AudioContext is unavailable", () => {
 
   assert.equal(engine.name, ENGINE_RUBBERBAND);
   assert.equal(engine.unavailableReason, "AudioContext unavailable");
+});
+
+test("loadRubberBandWasm uses instantiateStreaming when available", async () => {
+  const hooks = {
+    fetch(url) {
+      assert.equal(url, "./rubberband.wasm");
+      return "stream-response";
+    },
+    WebAssembly: {
+      instantiateStreaming(response, imports) {
+        assert.equal(response, "stream-response");
+        assert.deepEqual(imports, {});
+        return Promise.resolve("stream-module");
+      }
+    }
+  };
+
+  assert.equal(await loadRubberBandWasm("./rubberband.wasm", hooks), "stream-module");
+});
+
+test("loadRubberBandWasm falls back to arrayBuffer instantiation", async () => {
+  const bytes = new Uint8Array([0, 97, 115, 109]).buffer;
+  const hooks = {
+    async fetch(url) {
+      assert.equal(url, "./rubberband.wasm");
+      return {
+        async arrayBuffer() {
+          return bytes;
+        }
+      };
+    },
+    WebAssembly: {
+      instantiate(buffer, imports) {
+        assert.equal(buffer, bytes);
+        assert.deepEqual(imports, {});
+        return Promise.resolve("buffer-module");
+      }
+    }
+  };
+
+  assert.equal(await loadRubberBandWasm("./rubberband.wasm", hooks), "buffer-module");
+});
+
+test("loadRubberBandWasm rejects missing wasm urls", async () => {
+  await assert.rejects(() => loadRubberBandWasm("", {}), /Rubber Band WASM URL is required/);
 });
 
 test("buildPresetRates filters and sorts preset speeds", () => {
