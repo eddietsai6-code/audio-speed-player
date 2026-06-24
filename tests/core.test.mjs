@@ -5,7 +5,10 @@ import {
   buildPresetRates,
   clampRate,
   defineAudioSpeedPlayer,
+  ENGINE_NATIVE,
+  ENGINE_RUBBERBAND,
   formatRate,
+  normalizeEngineName,
   parseBooleanAttribute,
   parseRateAttribute
 } from "../dist/audio-speed-player.js";
@@ -35,6 +38,16 @@ test("parseBooleanAttribute handles HTML-style boolean values", () => {
   assert.equal(parseBooleanAttribute("0", true), false);
   assert.equal(parseBooleanAttribute(null, true), true);
   assert.equal(parseBooleanAttribute(null, false), false);
+});
+
+test("normalizeEngineName accepts native and rubberband engines only", () => {
+  assert.equal(normalizeEngineName(null), ENGINE_NATIVE);
+  assert.equal(normalizeEngineName(""), ENGINE_NATIVE);
+  assert.equal(normalizeEngineName("native"), ENGINE_NATIVE);
+  assert.equal(normalizeEngineName(" Native "), ENGINE_NATIVE);
+  assert.equal(normalizeEngineName("rubberband"), ENGINE_RUBBERBAND);
+  assert.equal(normalizeEngineName("RUBBERBAND"), ENGINE_RUBBERBAND);
+  assert.equal(normalizeEngineName("unknown"), ENGINE_NATIVE);
 });
 
 test("buildPresetRates filters and sorts preset speeds", () => {

@@ -4,7 +4,10 @@ export const DEFAULT_RATE = 1;
 export const DEFAULT_STEP = 0.05;
 export const DEFAULT_PRESET_RATES = [0.5, 0.75, 1, 1.25, 1.5];
 export const DEFAULT_TAG_NAME = "audio-speed-player";
+export const ENGINE_NATIVE = "native";
+export const ENGINE_RUBBERBAND = "rubberband";
 
+const SUPPORTED_ENGINES = new Set([ENGINE_NATIVE, ENGINE_RUBBERBAND]);
 const BOOLEAN_FALSE_VALUES = new Set(["false", "0", "off", "no"]);
 const BOOLEAN_TRUE_VALUES = new Set(["", "true", "1", "on", "yes"]);
 
@@ -41,6 +44,12 @@ export function parseBooleanAttribute(value, fallback = true) {
   const normalized = String(value).trim().toLowerCase();
   if (BOOLEAN_TRUE_VALUES.has(normalized)) return true;
   if (BOOLEAN_FALSE_VALUES.has(normalized)) return false;
+  return fallback;
+}
+
+export function normalizeEngineName(value, fallback = ENGINE_NATIVE) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (SUPPORTED_ENGINES.has(normalized)) return normalized;
   return fallback;
 }
 
