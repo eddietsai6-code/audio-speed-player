@@ -1,0 +1,40 @@
+name: Build Rubber Band WASM
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "codex/**"
+    paths:
+      - ".github/workflows/build-rubberband-wasm.yml"
+      - "scripts/build-rubberband-wasm.sh"
+      - "src/pro/rubberband-wasm/**"
+      - "vendor/rubberband/**"
+
+jobs:
+  build:
+    name: Build Rubber Band WASM
+    runs-on: ubuntu-latest
+    container: emscripten/emsdk:4.0.15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install archive tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl bzip2
+
+      - name: Build Rubber Band WASM
+        run: bash scripts/build-rubberband-wasm.sh
+
+      - name: Upload Rubber Band WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rubberband-wasm
+          path: |
+            dist/audio-speed-player-rubberband.mjs
+            dist/audio-speed-player-rubberband.wasm
+            vendor/rubberband/README.md

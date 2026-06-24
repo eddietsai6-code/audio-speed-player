@@ -58,6 +58,30 @@ engine for higher quality time-stretching.
 The native build remains MIT-compatible. A build that bundles Rubber Band must be
 GPL-compatible unless a commercial Rubber Band license is used.
 
+## Professional WASM Build
+
+The professional engine is intended to stay free and open-source. The project builds
+Rubber Band from the official source release with Emscripten and the upstream
+`single/RubberBandSingle.cpp` build path, which uses bundled free FFT and resampler
+implementations.
+
+The generated files are:
+
+```text
+dist/audio-speed-player-rubberband.mjs
+dist/audio-speed-player-rubberband.wasm
+```
+
+Build locally from an Emscripten environment:
+
+```bash
+bash scripts/build-rubberband-wasm.sh
+```
+
+Or run the `Build Rubber Band WASM` GitHub Actions workflow. The workflow downloads
+Rubber Band v4.0.0 from the official Breakfast Quay release URL and uploads the
+generated WASM files as a workflow artifact.
+
 ## Attributes
 
 | Attribute | Default | Description |
