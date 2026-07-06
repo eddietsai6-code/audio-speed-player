@@ -10,7 +10,7 @@
 
       function createSineWaveFile() {
         const sampleRate = 44100;
-        const seconds = 0.25;
+        const seconds = 2;
         const frames = Math.floor(sampleRate * seconds);
         const bytesPerSample = 2;
         const dataSize = frames * bytesPerSample;
@@ -83,10 +83,15 @@
         const shadow = player.shadowRoot;
         const transport = shadow.querySelector(".pro-transport");
         const button = shadow.querySelector(".transport-button");
+        const seekInput = shadow.querySelector(".seek-input");
+        const timeReadout = shadow.querySelector(".time-readout");
         const audio = shadow.querySelector("audio");
         const presetLabels = Array.from(shadow.querySelectorAll("[data-rate]")).map((preset) =>
           preset.textContent.trim()
         );
+
+        seekInput.value = "500";
+        seekInput.dispatchEvent(new Event("input", { bubbles: true }));
 
         result.textContent = JSON.stringify({
           ok:
@@ -95,14 +100,21 @@
             !transport.hidden &&
             button &&
             !button.disabled &&
+            seekInput &&
+            !seekInput.disabled &&
             player.hasAttribute("professional-active") &&
             Boolean(shadow.querySelector(".metaballs-stage")) &&
             Boolean(shadow.querySelector(".visualizer-canvas")) &&
-            JSON.stringify(presetLabels) === JSON.stringify(["0.75x", "0.85x", "1x", "1.25x", "1.5x"]),
+            JSON.stringify(presetLabels) === JSON.stringify(["0.75x", "0.85x", "1x", "1.25x", "1.5x"]) &&
+            timeReadout?.textContent.trim() === "0:01 / 0:02",
           engineStatus: shadow.querySelector(".engine-status")?.textContent,
           hasTransport: Boolean(transport),
           transportHidden: transport?.hidden,
           buttonText: button?.textContent,
+          hasSeekInput: Boolean(seekInput),
+          seekDisabled: seekInput?.disabled,
+          seekValue: seekInput?.value,
+          timeReadout: timeReadout?.textContent,
           audioHidden: getComputedStyle(audio).display === "none",
           hasMetaballsStage: Boolean(shadow.querySelector(".metaballs-stage")),
           hasVisualizerCanvas: Boolean(shadow.querySelector(".visualizer-canvas")),

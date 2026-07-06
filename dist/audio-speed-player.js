@@ -76,6 +76,19 @@ export function buildPresetRates(min, max, presets = DEFAULT_PRESET_RATES) {
     .sort((a, b) => a - b);
 }
 
+function clampSeconds(seconds, duration = 0) {
+  const safeSeconds = Math.max(0, toFiniteNumber(seconds, 0));
+  const safeDuration = toFiniteNumber(duration, 0);
+  return safeDuration > 0 ? Math.min(safeSeconds, safeDuration) : safeSeconds;
+}
+
+function formatClock(seconds) {
+  const safeSeconds = Math.floor(clampSeconds(seconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = String(safeSeconds % 60).padStart(2, "0");
+  return `${minutes}:${remainingSeconds}`;
+}
+
 export function registerAudioSpeedPlayerEngineFactory(engineName, factory) {
   const normalized = normalizeEngineName(engineName, "");
   if (!normalized || typeof factory !== "function") return false;
@@ -367,8 +380,9 @@ const componentStyles = `
   }
 
   .pro-transport {
-    display: flex;
+    display: grid;
     align-items: center;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 10px;
     margin: 12px 0 0;
     border: 1px solid rgba(234, 255, 247, 0.14);
@@ -385,7 +399,27 @@ const componentStyles = `
     min-width: 72px;
   }
 
+  .seek-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 30px;
+    accent-color: var(--asp-accent);
+    cursor: pointer;
+    touch-action: pan-y;
+  }
+
+  .time-readout {
+    min-width: 78px;
+    color: #cae5e0;
+    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    font-weight: 760;
+    text-align: right;
+    white-space: nowrap;
+  }
+
   .transport-state {
+    grid-column: 1 / -1;
     overflow: hidden;
     color: var(--asp-muted);
     font-size: 12px;
@@ -528,6 +562,19 @@ const componentStyles = `
       grid-template-columns: 1fr;
     }
 
+    .pro-transport {
+      grid-template-columns: 1fr;
+    }
+
+    .transport-button,
+    .time-readout {
+      width: 100%;
+    }
+
+    .time-readout {
+      text-align: left;
+    }
+
     .flow-shell {
       padding: 12px;
     }
@@ -603,6 +650,20 @@ export class NativeAudioEngine {
   pause() {
     return this.audio?.pause?.();
   }
+
+  getDuration() {
+    return toFiniteNumber(this.audio?.duration, 0);
+  }
+
+  getCurrentTime() {
+    return toFiniteNumber(this.audio?.currentTime, 0);
+  }
+
+  seek(seconds) {
+    const target = clampSeconds(seconds, this.getDuration());
+    this.audio.currentTime = target;
+    return target;
+  }
 }
 
 export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
@@ -631,6 +692,8 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this._sourceLoadToken = 0;
       this._hasAudioSource = false;
       this._sourceLoading = false;
+      this._duration = 0;
+      this._currentTime = 0;
       this._reflectingRate = false;
       this._reflectingPitch = false;
       this._parts = {};
@@ -807,6 +870,18 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
               <audio class="audio" part="audio" controls preload="metadata"></audio>
               <div class="pro-transport" part="professional-transport" hidden>
                 <button class="transport-button" part="transport-button" type="button" disabled>Play</button>
+                <input
+                  class="seek-input"
+                  part="seek-input"
+                  type="range"
+                  min="0"
+                  max="1000"
+                  step="1"
+                  value="0"
+                  disabled
+                  aria-label="Playback position"
+                />
+                <output class="time-readout" part="time-readout">0:00 / 0:00</output>
                 <span class="transport-state">Professional engine loading</span>
               </div>
               <p class="engine-status" part="engine-status" aria-live="polite"></p>
@@ -848,7 +923,9 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         rateInput: this.shadowRoot.querySelector(".rate-input"),
         rateReadout: this.shadowRoot.querySelector(".rate-readout"),
         resetButton: this.shadowRoot.querySelector(".reset-button"),
+        seekInput: this.shadowRoot.querySelector(".seek-input"),
         status: this.shadowRoot.querySelector(".status"),
+        timeReadout: this.shadowRoot.querySelector(".time-readout"),
         title: this.shadowRoot.querySelector(".title"),
         proTransport: this.shadowRoot.querySelector(".pro-transport"),
         transportButton: this.shadowRoot.querySelector(".transport-button"),
@@ -859,7 +936,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     }
 
     _bindEvents() {
-      const { audio, dropZone, fileInput, preserveInput, presetRow, rateInput, resetButton, transportButton } =
+      const { audio, dropZone, fileInput, preserveInput, presetRow, rateInput, resetButton, seekInput, transportButton } =
         this._parts;
 
       fileInput.addEventListener("change", () => {
@@ -905,6 +982,10 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         this._toggleProfessionalTransport();
       });
 
+      seekInput.addEventListener("input", () => {
+        this._seekFromInput();
+      });
+
       preserveInput.addEventListener("change", () => {
         this._setPreservePitch(preserveInput.checked, { reflect: true });
       });
@@ -913,6 +994,18 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         if (audio.playbackRate !== this._rate) {
           this.setRate(audio.playbackRate, { reflect: true });
         }
+      });
+
+      audio.addEventListener("durationchange", () => {
+        this._syncProgressUi();
+      });
+
+      audio.addEventListener("loadedmetadata", () => {
+        this._syncProgressUi();
+      });
+
+      audio.addEventListener("timeupdate", () => {
+        this._syncProgressUi();
       });
 
       audio.addEventListener("play", () => {
@@ -1039,6 +1132,8 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       }
       ctx.stroke();
       ctx.restore();
+
+      this._syncProgressUi();
     }
 
     _readAudioEnergy(time) {
@@ -1257,7 +1352,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     }
 
     _syncTransportUi() {
-      const { proTransport, transportButton, transportState } = this._parts;
+      const { proTransport, seekInput, transportButton, transportState } = this._parts;
       if (!proTransport || !transportButton || !transportState) return;
 
       const professionalActive = this._activeEngineName === ENGINE_RUBBERBAND;
@@ -1266,6 +1361,9 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
 
       transportButton.disabled = !this._hasAudioSource || this._sourceLoading;
       transportButton.textContent = this._transportPlaying ? "Pause" : "Play";
+      if (seekInput) {
+        seekInput.disabled = !this._hasAudioSource || this._sourceLoading || this._duration <= 0;
+      }
       transportState.textContent = this._sourceLoading
         ? "Loading professional Rubber Band engine"
         : this._hasAudioSource
@@ -1297,7 +1395,10 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this._hasAudioSource = Boolean(src);
       this._transportPlaying = false;
       this._sourceLoading = false;
+      this._duration = 0;
+      this._currentTime = 0;
       this.toggleAttribute("playing", false);
+      this._syncProgressUi();
       this._syncTransportUi();
 
       const result = this._audioEngine?.loadSource(src);
@@ -1315,7 +1416,10 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
           this._sourceLoading = false;
           this._activeEngineName = this._audioEngine?.name || this._activeEngineName;
           this._hasAudioSource = Boolean(src);
+          this._duration = this._getDuration();
+          this._currentTime = this._getCurrentTime();
           this._setStatus(this._activeEngineName === ENGINE_RUBBERBAND ? "Professional engine loaded." : "Audio source loaded.");
+          this._syncProgressUi();
           this._syncEngineStatus();
           return value;
         })
@@ -1335,7 +1439,78 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this._audioEngine.setPreservePitch(this._preservePitch);
       if (src) this._audioEngine.loadSource(src);
       this._setStatus(error?.message || "Professional engine unavailable, using native playback.");
+      this._duration = this._getDuration();
+      this._currentTime = this._getCurrentTime();
+      this._syncProgressUi();
       this._syncEngineStatus();
+    }
+
+    _getDuration() {
+      const engineDuration = this._audioEngine?.getDuration?.();
+      const audioDuration = this._parts.audio?.duration;
+      const duration = Number.isFinite(engineDuration)
+        ? engineDuration
+        : Number.isFinite(audioDuration)
+          ? audioDuration
+          : this._duration;
+      return clampSeconds(duration || 0);
+    }
+
+    _getCurrentTime() {
+      const engineTime = this._audioEngine?.getCurrentTime?.();
+      const audioTime = this._parts.audio?.currentTime;
+      const currentTime = Number.isFinite(engineTime)
+        ? engineTime
+        : Number.isFinite(audioTime)
+          ? audioTime
+          : this._currentTime;
+      return clampSeconds(currentTime || 0, this._getDuration());
+    }
+
+    _seekFromInput() {
+      const { seekInput } = this._parts;
+      const duration = this._getDuration();
+      if (!seekInput || duration <= 0) return;
+
+      const fraction = Math.min(Math.max(toFiniteNumber(seekInput.value, 0) / 1000, 0), 1);
+      this._seekTo(duration * fraction);
+    }
+
+    _seekTo(seconds) {
+      const duration = this._getDuration();
+      const target = clampSeconds(seconds, duration);
+      const actual = this._audioEngine?.seek?.(target) ?? target;
+      this._currentTime = clampSeconds(actual, duration);
+      this._syncProgressUi();
+      this.dispatchEvent(
+        new CustomEvent("audio-speed-player:seek", {
+          detail: {
+            currentTime: this._currentTime,
+            duration
+          }
+        })
+      );
+      return this._currentTime;
+    }
+
+    _syncProgressUi() {
+      const { seekInput, timeReadout } = this._parts;
+      if (!seekInput || !timeReadout) return;
+
+      const duration = this._getDuration();
+      const currentTime = this._getCurrentTime();
+      this._duration = duration;
+      this._currentTime = currentTime;
+
+      seekInput.disabled = !this._hasAudioSource || this._sourceLoading || duration <= 0;
+      seekInput.value = duration > 0 ? String(Math.round((currentTime / duration) * 1000)) : "0";
+      timeReadout.textContent = `${formatClock(currentTime)} / ${formatClock(duration)}`;
+
+      if (this._activeEngineName === ENGINE_RUBBERBAND && this._transportPlaying && duration > 0 && currentTime >= duration) {
+        this._transportPlaying = false;
+        this.toggleAttribute("playing", false);
+        this._syncTransportUi();
+      }
     }
 
     async _toggleProfessionalTransport() {
@@ -1345,6 +1520,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         this._audioEngine?.pause?.();
         this._transportPlaying = false;
         this.toggleAttribute("playing", false);
+        this._syncProgressUi();
         this._syncTransportUi();
         return;
       }
@@ -1355,6 +1531,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         await this._audioEngine?.play?.();
         this._transportPlaying = true;
         this.toggleAttribute("playing", true);
+        this._syncProgressUi();
         this._syncTransportUi();
       } catch (error) {
         this._setStatus(error?.message || "Unable to start professional playback.");

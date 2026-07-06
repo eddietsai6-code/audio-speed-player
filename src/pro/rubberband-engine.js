@@ -109,6 +109,32 @@ export function createRubberBandEngine(options = {}) {
   let analyserNode = null;
   let rate = 1;
   let preservePitch = true;
+  let duration = 0;
+  let currentTime = 0;
+  let startedAt = 0;
+  let playing = false;
+
+  function now() {
+    return (hooks.performance?.now?.() ?? Date.now()) / 1000;
+  }
+
+  function clampEngineTime(seconds) {
+    const safeSeconds = Math.max(0, Number(seconds) || 0);
+    return duration > 0 ? Math.min(safeSeconds, duration) : safeSeconds;
+  }
+
+  function syncCurrentTime() {
+    if (playing) {
+      const nextTime = currentTime + Math.max(0, now() - startedAt) * rate;
+      currentTime = clampEngineTime(nextTime);
+      startedAt = now();
+      if (duration > 0 && currentTime >= duration) {
+        playing = false;
+      }
+    }
+
+    return currentTime;
+  }
 
   function connectWorkletOutput() {
     if (!workletNode) return false;
@@ -170,6 +196,10 @@ export function createRubberBandEngine(options = {}) {
         const node = await ensureWorkletNode();
         const bytes = await fetchArrayBuffer(source, hooks);
         const decoded = await audioContext.decodeAudioData(bytes);
+        duration = Number(decoded.duration) || decoded.getChannelData(0).length / decoded.sampleRate || 0;
+        currentTime = 0;
+        startedAt = now();
+        playing = false;
 
         if (wasmUrl) {
           const wasmBinary = await fetchArrayBuffer(wasmUrl, hooks);
@@ -199,15 +229,22 @@ export function createRubberBandEngine(options = {}) {
       }
     },
     async play() {
+      syncCurrentTime();
+      playing = true;
+      startedAt = now();
       workletNode?.port?.postMessage(createRubberBandMessage("play"));
     },
     pause() {
+      syncCurrentTime();
+      playing = false;
       workletNode?.port?.postMessage(createRubberBandMessage("pause"));
     },
     setRate(value) {
       const nextRate = Number(value);
       if (Number.isFinite(nextRate)) {
+        syncCurrentTime();
         rate = nextRate;
+        startedAt = now();
         workletNode?.port?.postMessage(createRubberBandMessage("set-rate", { rate: nextRate }));
       }
       return nextRate;
@@ -216,6 +253,18 @@ export function createRubberBandEngine(options = {}) {
       preservePitch = Boolean(value);
       workletNode?.port?.postMessage(createRubberBandMessage("set-preserve-pitch", { preservePitch }));
       return preservePitch;
+    },
+    getDuration() {
+      return duration;
+    },
+    getCurrentTime() {
+      return syncCurrentTime();
+    },
+    seek(seconds) {
+      currentTime = clampEngineTime(seconds);
+      startedAt = now();
+      workletNode?.port?.postMessage(createRubberBandMessage("seek", { seconds: currentTime }));
+      return currentTime;
     },
     connectAnalyser(analyser) {
       if (!analyser || !audioContext) return false;
@@ -227,6 +276,7 @@ export function createRubberBandEngine(options = {}) {
       analyserNode?.disconnect?.();
       workletNode = null;
       analyserNode = null;
+      playing = false;
     }
   };
 }

@@ -27,6 +27,8 @@ import {
 function createFakeAudio() {
   return {
     defaultPlaybackRate: 1,
+    currentTime: 0,
+    duration: 120,
     playbackRate: 1,
     preservesPitch: true,
     mozPreservesPitch: true,
@@ -144,6 +146,19 @@ test("NativeAudioEngine loads sources and keeps playback controls delegated", as
   assert.equal(audio.loadCalls, 1);
   assert.equal(audio.playCalls, 1);
   assert.equal(audio.pauseCalls, 1);
+});
+
+test("NativeAudioEngine seeks within the loaded audio duration", () => {
+  const audio = createFakeAudio();
+  const engine = new NativeAudioEngine(audio);
+
+  assert.equal(engine.getDuration(), 120);
+  assert.equal(engine.seek(45), 45);
+  assert.equal(engine.getCurrentTime(), 45);
+  assert.equal(audio.currentTime, 45);
+
+  assert.equal(engine.seek(999), 120);
+  assert.equal(audio.currentTime, 120);
 });
 
 test("NativeAudioEngine reapplies stored rate and pitch state after loading a source", () => {
@@ -430,6 +445,64 @@ test("RubberBandEngine initializes the worklet with WASM before posting buffers"
   assert.equal(postedMessages[0].message.wasmBinary, wasmBytes);
   assert.deepEqual(postedMessages[0].transfers, [wasmBytes]);
   assert.equal(postedMessages[1].message.type, "load-buffer");
+});
+
+test("RubberBandEngine tracks duration and posts seek messages to the worklet", async () => {
+  const postedMessages = [];
+  const sourceBytes = new Uint8Array([1, 2, 3]).buffer;
+
+  function FakeAudioWorkletNode() {
+    return {
+      port: {
+        postMessage(message) {
+          postedMessages.push(message);
+        }
+      },
+      connect() {},
+      disconnect() {}
+    };
+  }
+
+  const engine = createRubberBandEngine({
+    audioContext: {
+      sampleRate: 44100,
+      destination: "speakers",
+      audioWorklet: {
+        async addModule() {}
+      },
+      async decodeAudioData() {
+        return {
+          duration: 2.5,
+          numberOfChannels: 1,
+          sampleRate: 44100,
+          getChannelData() {
+            return Float32Array.from([0, 0.5, 1]);
+          }
+        };
+      }
+    },
+    hooks: {
+      AudioWorkletNode: FakeAudioWorkletNode,
+      async fetch() {
+        return {
+          async arrayBuffer() {
+            return sourceBytes;
+          }
+        };
+      }
+    },
+    workletUrl: "./audio-speed-player-pro.worklet.js"
+  });
+
+  await engine.loadSource("./lesson.mp3");
+
+  assert.equal(engine.getDuration(), 2.5);
+  assert.equal(engine.seek(1.25), 1.25);
+  assert.equal(engine.getCurrentTime(), 1.25);
+  assert.deepEqual(postedMessages.at(-1), { type: "seek", seconds: 1.25 });
+
+  assert.equal(engine.seek(99), 2.5);
+  assert.deepEqual(postedMessages.at(-1), { type: "seek", seconds: 2.5 });
 });
 
 test("RubberBandEngine routes worklet output through an analyser for visuals", async () => {

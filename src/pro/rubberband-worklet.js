@@ -50,6 +50,10 @@ class AudioSpeedPlayerRubberBandProcessor extends AudioWorkletProcessor {
     if (message.type === "seek") {
       const seconds = Math.max(0, Number(message.seconds) || 0);
       this.position = Math.min(seconds * this.sourceSampleRate, this.bufferLength());
+      if (this.rubberBand?.state) {
+        this.rubberBand.module._asp_rubberband_reset(this.rubberBand.state);
+        this.rubberBand.module._asp_rubberband_set_playback_rate(this.rubberBand.state, this.rate);
+      }
       return;
     }
 
