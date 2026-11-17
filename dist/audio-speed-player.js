@@ -1525,7 +1525,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         this._rewindTimer = setTimeout(() => {
           this._rewindTimer = null;
           this._seekTo(0);
-        }, 1000);
+        }, 2000);
         this._syncTransportUi();
       }
     }

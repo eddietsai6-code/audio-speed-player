@@ -199,7 +199,7 @@ test("professional playback waits before rewinding and respects user actions", a
     assert.equal(player._transportPlaying, false);
     assert.equal(time, 2);
     assert.equal(player._parts.seekInput.value, "1000");
-    t.mock.timers.tick(999);
+    t.mock.timers.tick(1999);
     assert.equal(time, 2);
     t.mock.timers.tick(1);
     assert.equal(time, 0);
@@ -211,7 +211,7 @@ test("professional playback waits before rewinding and respects user actions", a
     player._transportPlaying = true;
     player._syncProgressUi();
     player._seekTo(0.75);
-    t.mock.timers.tick(1000);
+    t.mock.timers.tick(2000);
     assert.equal(time, 0.75);
 
     time = 2;
@@ -221,14 +221,14 @@ test("professional playback waits before rewinding and respects user actions", a
     assert.equal(time, 0);
     assert.equal(player._transportPlaying, true);
     time = 0.5;
-    t.mock.timers.tick(1000);
+    t.mock.timers.tick(2000);
     assert.equal(time, 0.5);
 
     time = 2;
     player._transportPlaying = true;
     player._syncProgressUi();
     player._setAudioSource("next.mp3");
-    t.mock.timers.tick(1000);
+    t.mock.timers.tick(2000);
     assert.equal(time, 0.5);
   } finally {
     for (const [key, value] of Object.entries(previous)) {
