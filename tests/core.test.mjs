@@ -161,6 +161,50 @@ test("NativeAudioEngine seeks within the loaded audio duration", () => {
   assert.equal(audio.currentTime, 120);
 });
 
+test("professional playback rewinds and stays paused when it reaches the end", () => {
+  const previous = { HTMLElement: globalThis.HTMLElement, customElements: globalThis.customElements, document: globalThis.document, CustomEvent: globalThis.CustomEvent };
+  let Player;
+  try {
+    globalThis.HTMLElement = class {};
+    globalThis.document = {};
+    globalThis.customElements = { get: () => undefined, define: (_name, constructor) => { Player = constructor; } };
+    globalThis.CustomEvent = class { constructor(type, options) { this.type = type; this.detail = options.detail; } };
+    defineAudioSpeedPlayer("test-audio-speed-player");
+
+    let time = 2;
+    const messages = [];
+    const player = Object.assign(Object.create(Player.prototype), {
+      _parts: { audio: {}, seekInput: {}, timeReadout: {} },
+      _audioEngine: {
+        getDuration: () => 2,
+        getCurrentTime: () => time,
+        pause: () => messages.push("pause"),
+        seek: (seconds) => { time = seconds; messages.push(`seek:${seconds}`); return seconds; }
+      },
+      _activeEngineName: ENGINE_RUBBERBAND,
+      _hasAudioSource: true,
+      _sourceLoading: false,
+      _transportPlaying: true,
+      toggleAttribute: () => {},
+      dispatchEvent: () => {},
+      _syncTransportUi: () => {}
+    });
+
+    player._syncProgressUi();
+
+    assert.equal(player._transportPlaying, false);
+    assert.equal(time, 0);
+    assert.equal(player._parts.seekInput.value, "0");
+    assert.equal(player._parts.timeReadout.textContent, "0:00 / 0:02");
+    assert.deepEqual(messages, ["pause", "seek:0"]);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  }
+});
+
 test("NativeAudioEngine reapplies stored rate and pitch state after loading a source", () => {
   const audio = createFakeAudio();
   const engine = new NativeAudioEngine(audio);

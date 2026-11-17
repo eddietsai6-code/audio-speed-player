@@ -1507,8 +1507,10 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       timeReadout.textContent = `${formatClock(currentTime)} / ${formatClock(duration)}`;
 
       if (this._activeEngineName === ENGINE_RUBBERBAND && this._transportPlaying && duration > 0 && currentTime >= duration) {
+        this._audioEngine?.pause?.();
         this._transportPlaying = false;
         this.toggleAttribute("playing", false);
+        this._seekTo(0);
         this._syncTransportUi();
       }
     }
