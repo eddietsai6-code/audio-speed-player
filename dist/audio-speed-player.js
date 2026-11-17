@@ -689,6 +689,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       this._activeEngineName = ENGINE_NATIVE;
       this._audioEngine = null;
       this._transportPlaying = false;
+      this._rewindTimer = null;
       this._sourceLoadToken = 0;
       this._hasAudioSource = false;
       this._sourceLoading = false;
@@ -736,6 +737,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     }
 
     disconnectedCallback() {
+      this._cancelEndRewind();
       this._stopVisualizer();
       this._disconnectAudioGraph();
       this._audioEngine?.destroy?.();
@@ -1315,6 +1317,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     }
 
     _selectEngine(requestedEngine) {
+      this._cancelEndRewind();
       this._requestedEngineName = requestedEngine;
       this._audioEngine?.destroy?.();
       this._transportPlaying = false;
@@ -1391,6 +1394,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     }
 
     _setAudioSource(src) {
+      this._cancelEndRewind();
       const token = (this._sourceLoadToken += 1);
       this._hasAudioSource = Boolean(src);
       this._transportPlaying = false;
@@ -1477,6 +1481,7 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
     }
 
     _seekTo(seconds) {
+      this._cancelEndRewind();
       const duration = this._getDuration();
       const target = clampSeconds(seconds, duration);
       const actual = this._audioEngine?.seek?.(target) ?? target;
@@ -1491,6 +1496,13 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         })
       );
       return this._currentTime;
+    }
+
+    _cancelEndRewind() {
+      if (this._rewindTimer != null) {
+        clearTimeout(this._rewindTimer);
+        this._rewindTimer = null;
+      }
     }
 
     _syncProgressUi() {
@@ -1510,13 +1522,18 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
         this._audioEngine?.pause?.();
         this._transportPlaying = false;
         this.toggleAttribute("playing", false);
-        this._seekTo(0);
+        this._rewindTimer = setTimeout(() => {
+          this._rewindTimer = null;
+          this._seekTo(0);
+        }, 1000);
         this._syncTransportUi();
       }
     }
 
     async _toggleProfessionalTransport() {
       if (this._activeEngineName !== ENGINE_RUBBERBAND || !this._hasAudioSource) return;
+
+      this._cancelEndRewind();
 
       if (this._transportPlaying) {
         this._audioEngine?.pause?.();
@@ -1528,6 +1545,9 @@ export function defineAudioSpeedPlayer(tagName = DEFAULT_TAG_NAME) {
       }
 
       try {
+        if (this._getDuration() > 0 && this._getCurrentTime() >= this._getDuration()) {
+          this._seekTo(0);
+        }
         this._ensureProfessionalAudioGraph();
         await this._audioContext?.resume?.();
         await this._audioEngine?.play?.();

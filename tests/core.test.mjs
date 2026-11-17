@@ -161,7 +161,8 @@ test("NativeAudioEngine seeks within the loaded audio duration", () => {
   assert.equal(audio.currentTime, 120);
 });
 
-test("professional playback rewinds and stays paused when it reaches the end", () => {
+test("professional playback waits before rewinding and respects user actions", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
   const previous = { HTMLElement: globalThis.HTMLElement, customElements: globalThis.customElements, document: globalThis.document, CustomEvent: globalThis.CustomEvent };
   let Player;
   try {
@@ -179,6 +180,8 @@ test("professional playback rewinds and stays paused when it reaches the end", (
         getDuration: () => 2,
         getCurrentTime: () => time,
         pause: () => messages.push("pause"),
+        play: async () => messages.push("play"),
+        loadSource: () => { time = 0.5; },
         seek: (seconds) => { time = seconds; messages.push(`seek:${seconds}`); return seconds; }
       },
       _activeEngineName: ENGINE_RUBBERBAND,
@@ -187,16 +190,46 @@ test("professional playback rewinds and stays paused when it reaches the end", (
       _transportPlaying: true,
       toggleAttribute: () => {},
       dispatchEvent: () => {},
+      _ensureProfessionalAudioGraph: () => {},
       _syncTransportUi: () => {}
     });
 
     player._syncProgressUi();
 
     assert.equal(player._transportPlaying, false);
+    assert.equal(time, 2);
+    assert.equal(player._parts.seekInput.value, "1000");
+    t.mock.timers.tick(999);
+    assert.equal(time, 2);
+    t.mock.timers.tick(1);
     assert.equal(time, 0);
     assert.equal(player._parts.seekInput.value, "0");
     assert.equal(player._parts.timeReadout.textContent, "0:00 / 0:02");
     assert.deepEqual(messages, ["pause", "seek:0"]);
+
+    time = 2;
+    player._transportPlaying = true;
+    player._syncProgressUi();
+    player._seekTo(0.75);
+    t.mock.timers.tick(1000);
+    assert.equal(time, 0.75);
+
+    time = 2;
+    player._transportPlaying = true;
+    player._syncProgressUi();
+    await player._toggleProfessionalTransport();
+    assert.equal(time, 0);
+    assert.equal(player._transportPlaying, true);
+    time = 0.5;
+    t.mock.timers.tick(1000);
+    assert.equal(time, 0.5);
+
+    time = 2;
+    player._transportPlaying = true;
+    player._syncProgressUi();
+    player._setAudioSource("next.mp3");
+    t.mock.timers.tick(1000);
+    assert.equal(time, 0.5);
   } finally {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete globalThis[key];
